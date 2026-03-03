@@ -43,6 +43,7 @@ export const StarTool: Tool = {
       innerRadiusRatio: 0.4,
     };
     cbs.addObject(obj);
+    cbs.setToolState({ activeTool: 'select' });
   },
 
   onKeyDown(e: KeyboardEvent, cbs: ToolCallbacks): void {

@@ -31,6 +31,7 @@ export function CanvasRoot({ particlesRef, renderTick }: CanvasRootProps) {
   }));
   const viewport = useUIStore((s) => s.viewport);
   const setViewport = useUIStore((s) => s.setViewport);
+  const showOutlines = useUIStore((s) => s.showOutlines);
   const config = useParticleStore((s) => s.config);
 
   // Build tool callbacks (stable reference via useCallback)
@@ -91,12 +92,12 @@ export function CanvasRoot({ particlesRef, renderTick }: CanvasRootProps) {
     ctx.fillStyle = '#111114';
     ctx.fillRect(offsetX, offsetY, vp.documentWidth * scale, vp.documentHeight * scale);
 
-    renderScene(ctx, objects, viewport);
+    if (showOutlines) renderScene(ctx, objects, viewport);
     renderParticles(ctx, particlesRef.current ?? [], config, viewport);
     renderHandles(ctx, toolState, objects, viewport);
 
     ctx.restore();
-  }, [renderTick, objects, toolState, viewport, config, particlesRef]);
+  }, [renderTick, objects, toolState, viewport, config, particlesRef, showOutlines]);
 
   // Pointer handlers
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -130,10 +131,10 @@ export function CanvasRoot({ particlesRef, renderTick }: CanvasRootProps) {
   // Keyboard shortcuts
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      // Tool hotkeys (only when not focused on an input/select)
       const tag = document.activeElement?.tagName;
-      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+      const inInput = tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA';
 
+      // Tool hotkeys always work — even when a slider is focused
       type DrawToolType = 'select' | 'rectangle' | 'ellipse' | 'star';
       const hotkeyMap: Record<string, DrawToolType> = {
         v: 'select', V: 'select',
@@ -147,6 +148,8 @@ export function CanvasRoot({ particlesRef, renderTick }: CanvasRootProps) {
         useToolStore.getState().setActiveTool(nextTool);
         return;
       }
+
+      if (inInput) return; // block Delete/Backspace etc. in inputs
 
       if (e.key === 'Shift') {
         useToolStore.getState().setShiftHeld(true);

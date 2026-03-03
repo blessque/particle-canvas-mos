@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { useParticleStore } from '@/store/particleStore';
+import { useUIStore } from '@/store/uiStore';
 import type { SpawnDirection, FalloffType } from '@/types/particles';
 
 function SliderRow({
@@ -7,6 +9,7 @@ function SliderRow({
   min,
   max,
   step,
+  displayValue,
   onChange,
 }: {
   label: string;
@@ -14,13 +17,14 @@ function SliderRow({
   min: number;
   max: number;
   step: number;
+  displayValue?: string;
   onChange: (v: number) => void;
 }) {
   return (
     <div className="flex flex-col gap-0.5">
       <div className="flex justify-between text-xs text-white/50">
         <span>{label}</span>
-        <span className="font-mono text-white/70">{value}</span>
+        <span className="font-mono text-white/70">{displayValue ?? value}</span>
       </div>
       <input
         type="range"
@@ -78,6 +82,19 @@ export function ParticlePanel() {
   const config = useParticleStore((s) => s.config);
   const updateConfig = useParticleStore((s) => s.updateConfig);
   const randomizeSeed = useParticleStore((s) => s.randomizeSeed);
+  const showOutlines = useUIStore((s) => s.showOutlines);
+  const setShowOutlines = useUIStore((s) => s.setShowOutlines);
+
+  const [baseSize, setBaseSize] = useState(config.minSize);
+  const [sizeVariance, setSizeVariance] = useState(0);
+
+  function applySize(size: number, variance: number) {
+    const f = variance / 100;
+    updateConfig({
+      minSize: size * Math.max(0.5, 1 - f),
+      maxSize: size * (1 + f),
+    });
+  }
 
   return (
     <div className="flex flex-col gap-3 p-3 overflow-y-auto flex-1">
@@ -87,27 +104,44 @@ export function ParticlePanel() {
         label="Count"
         value={config.count}
         min={100}
-        max={10000}
+        max={20000}
         step={100}
         onChange={(v) => updateConfig({ count: v })}
       />
 
       <SliderRow
         label="Size"
-        value={config.minSize}
+        value={baseSize}
         min={0.5}
         max={8}
         step={0.5}
-        onChange={(v) => updateConfig({ minSize: v, maxSize: v })}
+        onChange={(v) => {
+          setBaseSize(v);
+          applySize(v, sizeVariance);
+        }}
       />
 
       <SliderRow
-        label="Opacity"
-        value={Math.round(config.baseOpacity * 100)}
-        min={10}
+        label="Size Variance"
+        value={sizeVariance}
+        min={0}
         max={100}
         step={5}
-        onChange={(v) => updateConfig({ baseOpacity: v / 100 })}
+        displayValue={`${sizeVariance}%`}
+        onChange={(v) => {
+          setSizeVariance(v);
+          applySize(baseSize, v);
+        }}
+      />
+
+      <SliderRow
+        label="Opacity Variance"
+        value={Math.round(config.falloffBias * 100)}
+        min={0}
+        max={100}
+        step={5}
+        displayValue={`${Math.round(config.falloffBias * 100)}%`}
+        onChange={(v) => updateConfig({ falloffBias: v / 100, baseOpacity: 1.0, opacityRandomize: true })}
       />
 
       <SliderRow
@@ -149,6 +183,16 @@ export function ParticlePanel() {
       >
         Randomize Seed
       </button>
+
+      <label className="flex items-center gap-2 text-xs text-white/60 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={showOutlines}
+          onChange={(e) => setShowOutlines(e.target.checked)}
+          className="accent-blue-400"
+        />
+        Show shape outlines
+      </label>
     </div>
   );
 }

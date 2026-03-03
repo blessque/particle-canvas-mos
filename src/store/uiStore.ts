@@ -14,10 +14,12 @@ interface UIStoreState {
   viewport: ViewportState;
   leftPanelOpen: boolean;
   exportDialogOpen: boolean;
+  showOutlines: boolean;
 
   setViewport: (partial: Partial<ViewportState>) => void;
   toggleLeftPanel: () => void;
   setExportDialogOpen: (open: boolean) => void;
+  setShowOutlines: (v: boolean) => void;
 }
 
 export const useUIStore = create<UIStoreState>((set) => ({
@@ -32,6 +34,7 @@ export const useUIStore = create<UIStoreState>((set) => ({
   },
   leftPanelOpen: true,
   exportDialogOpen: false,
+  showOutlines: true,
 
   setViewport: (partial) =>
     set((state) => ({
@@ -42,4 +45,6 @@ export const useUIStore = create<UIStoreState>((set) => ({
     set((state) => ({ leftPanelOpen: !state.leftPanelOpen })),
 
   setExportDialogOpen: (open) => set({ exportDialogOpen: open }),
+
+  setShowOutlines: (v) => set({ showOutlines: v }),
 }));

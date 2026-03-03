@@ -71,9 +71,7 @@ export function distributeParticles(
 
   const rng = mulberry32(config.seed);
   const particles: Particle[] = [];
-  // Use minSize as the single particle size (no randomization in MVP)
-  const radius = config.minSize;
-  const minDist = radius * 2;
+  const minDist = config.minSize * 2;
   const hash = new SpatialHash(minDist);
   const maxAttempts = config.count * 12;
 
@@ -111,9 +109,8 @@ export function distributeParticles(
 
     // 7. Accept particle
     hash.add(candidate.x, candidate.y);
-    const opacity = config.opacityRandomize
-      ? config.baseOpacity * (0.4 + rng() * 0.6)
-      : config.baseOpacity;
+    const opacity = 1.0 - config.falloffBias * (1.0 - rng());
+    const radius = config.minSize + rng() * (config.maxSize - config.minSize);
 
     particles.push({ x: candidate.x, y: candidate.y, radius, opacity });
   }

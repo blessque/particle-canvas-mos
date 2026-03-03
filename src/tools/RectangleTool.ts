@@ -41,6 +41,7 @@ export const RectangleTool: Tool = {
       locked: false,
     };
     cbs.addObject(obj);
+    cbs.setToolState({ activeTool: 'select' });
   },
 
   onKeyDown(e: KeyboardEvent, cbs: ToolCallbacks): void {
