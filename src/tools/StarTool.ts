@@ -1,0 +1,53 @@
+import type { Tool, ToolCallbacks } from '@/types/tools';
+import type { Point } from '@/types/geometry';
+import type { StarObject } from '@/types/scene';
+import { uid } from '@/utils/uid';
+import { dragToBBox, MIN_DRAG_SIZE } from './pointerUtils';
+
+export const StarTool: Tool = {
+  name: 'star',
+
+  getCursor(): string {
+    return 'crosshair';
+  },
+
+  onPointerDown(_e: PointerEvent, docPoint: Point, cbs: ToolCallbacks): void {
+    cbs.setToolState({ isDrawing: true, drawStart: docPoint, drawCurrent: docPoint });
+  },
+
+  onPointerMove(_e: PointerEvent, docPoint: Point, cbs: ToolCallbacks): void {
+    const state = cbs.getToolState();
+    if (!state.isDrawing) return;
+    cbs.setToolState({ drawCurrent: docPoint });
+  },
+
+  onPointerUp(_e: PointerEvent, docPoint: Point, cbs: ToolCallbacks): void {
+    const state = cbs.getToolState();
+    if (!state.isDrawing || !state.drawStart) return;
+
+    cbs.setToolState({ isDrawing: false, drawStart: null, drawCurrent: null });
+
+    const bbox = dragToBBox(state.drawStart, docPoint, state.shiftHeld);
+    if (bbox.width < MIN_DRAG_SIZE || bbox.height < MIN_DRAG_SIZE) return;
+
+    const obj: StarObject = {
+      id: uid(),
+      type: 'star',
+      position: { x: bbox.x, y: bbox.y },
+      width: bbox.width,
+      height: bbox.height,
+      rotation: 0,
+      visible: true,
+      locked: false,
+      points: 5,
+      innerRadiusRatio: 0.4,
+    };
+    cbs.addObject(obj);
+  },
+
+  onKeyDown(e: KeyboardEvent, cbs: ToolCallbacks): void {
+    if (e.key === 'Escape') {
+      cbs.setToolState({ isDrawing: false, drawStart: null, drawCurrent: null });
+    }
+  },
+};
