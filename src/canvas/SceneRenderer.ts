@@ -1,4 +1,4 @@
-import type { SceneObject } from '@/types/scene';
+import type { SceneObject, FreehandObject } from '@/types/scene';
 import type { ViewportState } from '@/store/uiStore';
 import { documentToCanvas, scaleToCanvas } from '@/utils/coordinates';
 import { computeStarVertices } from '@/engine/shapeGeometry';
@@ -38,6 +38,9 @@ function drawObjectOutline(
       break;
     case 'star':
       drawStarOutline(ctx, obj, viewport);
+      break;
+    case 'freehand':
+      drawFreehandOutline(ctx, obj, viewport);
       break;
     default:
       break;
@@ -92,4 +95,25 @@ function drawStarOutline(
   }
   ctx.closePath();
   ctx.stroke();
+}
+
+function drawFreehandOutline(
+  ctx: CanvasRenderingContext2D,
+  obj: FreehandObject,
+  viewport: ViewportState,
+): void {
+  if (obj.path.segments.length === 0) return;
+  ctx.beginPath();
+  let started = false;
+  for (const seg of obj.path.segments) {
+    if (seg.type !== 'line') continue;
+    if (!started) {
+      const from = documentToCanvas(seg.from, viewport);
+      ctx.moveTo(from.x, from.y);
+      started = true;
+    }
+    const to = documentToCanvas(seg.to, viewport);
+    ctx.lineTo(to.x, to.y);
+  }
+  if (started) ctx.stroke();
 }

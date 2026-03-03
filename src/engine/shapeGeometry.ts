@@ -1,5 +1,5 @@
 import type { Point } from '@/types/geometry';
-import type { SceneObject } from '@/types/scene';
+import type { SceneObject, FreehandObject } from '@/types/scene';
 import { sub, normalize, perp2D, dot, scale } from './vectorMath';
 
 export interface OutlineSample {
@@ -118,6 +118,29 @@ function sampleStar(obj: SceneObject & { type: 'star' }): OutlineSample[] {
   return samples;
 }
 
+function sampleFreehandPath(obj: FreehandObject): OutlineSample[] {
+  const samples: OutlineSample[] = [];
+  for (const seg of obj.path.segments) {
+    if (seg.type !== 'line') continue;
+    const dx = seg.to.x - seg.from.x;
+    const dy = seg.to.y - seg.from.y;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 1) continue;
+    // Perpendicular normal (both sides handled by spawnDirection in distributor)
+    const nx = -dy / len;
+    const ny = dx / len;
+    const steps = Math.max(1, Math.floor(len / 2));
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      samples.push({
+        point: { x: seg.from.x + dx * t, y: seg.from.y + dy * t },
+        normal: { x: nx, y: ny },
+      });
+    }
+  }
+  return samples;
+}
+
 /**
  * Returns outline sample points (with outward normals) for a given scene object.
  * Returns empty array for unsupported types.
@@ -127,6 +150,7 @@ export function sampleShapeOutline(obj: SceneObject): OutlineSample[] {
     case 'rectangle': return sampleRectangle(obj);
     case 'ellipse':   return sampleEllipse(obj);
     case 'star':      return sampleStar(obj);
+    case 'freehand':  return sampleFreehandPath(obj);
     default:          return [];
   }
 }

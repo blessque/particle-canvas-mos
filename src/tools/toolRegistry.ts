@@ -3,14 +3,14 @@ import { RectangleTool } from './RectangleTool';
 import { EllipseTool } from './EllipseTool';
 import { StarTool } from './StarTool';
 import { SelectTool } from './SelectTool';
+import { FreehandTool } from './FreehandTool';
 
 const registry: Record<ToolType, Tool> = {
   select: SelectTool,
   rectangle: RectangleTool,
   ellipse: EllipseTool,
   star: StarTool,
-  // freehand deferred to a later phase
-  freehand: SelectTool,
+  freehand: FreehandTool,
 };
 
 export function getToolInstance(type: ToolType): Tool {

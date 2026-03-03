@@ -11,6 +11,7 @@ export interface ToolState {
   drawCurrent: Point | null;
   shiftHeld: boolean;
   selectedObjectIds: string[];
+  pendingPath: Point[] | null;
 }
 
 /** Pointer event handlers that every tool must implement */
@@ -32,4 +33,5 @@ export interface ToolCallbacks {
   setToolState(partial: Partial<ToolState>): void;
   getToolState(): ToolState;
   getObjects(): import('./scene').SceneObject[];
+  getScale(): number;
 }

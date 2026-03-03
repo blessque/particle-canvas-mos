@@ -3,6 +3,7 @@ import type { SceneObject } from '@/types/scene';
 import type { ViewportState } from '@/store/uiStore';
 import { documentToCanvas, scaleToCanvas } from '@/utils/coordinates';
 import { computeStarVertices } from '@/engine/shapeGeometry';
+import { getHandles } from '@/utils/handleUtils';
 
 /**
  * Render selection highlights and drawing ghost previews.
@@ -19,12 +20,31 @@ export function renderHandles(
   // Draw selection outlines for selected objects
   for (const id of toolState.selectedObjectIds) {
     const obj = objects.find((o) => o.id === id);
-    if (obj) drawSelectionOutline(ctx, obj, viewport);
+    if (obj) {
+      drawSelectionOutline(ctx, obj, viewport);
+      drawResizeHandles(ctx, obj, viewport);
+    }
   }
 
-  // Draw ghost preview while user is actively drawing
-  if (toolState.isDrawing && toolState.drawStart && toolState.drawCurrent) {
+  // Draw ghost preview while user is actively drawing a shape
+  if (toolState.isDrawing && toolState.drawStart && toolState.drawCurrent &&
+      toolState.activeTool !== 'freehand' && toolState.activeTool !== 'select') {
     drawGhostPreview(ctx, toolState, viewport);
+  }
+
+  // Freehand live preview
+  if (toolState.activeTool === 'freehand' && toolState.pendingPath && toolState.pendingPath.length > 1) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    const first = documentToCanvas(toolState.pendingPath[0]!, viewport);
+    ctx.moveTo(first.x, first.y);
+    for (let i = 1; i < toolState.pendingPath.length; i++) {
+      const pt = documentToCanvas(toolState.pendingPath[i]!, viewport);
+      ctx.lineTo(pt.x, pt.y);
+    }
+    ctx.stroke();
   }
 
   ctx.restore();
@@ -77,9 +97,46 @@ function drawSelectionOutline(
       ctx.stroke();
       break;
     }
+    case 'freehand': {
+      if (obj.path.segments.length === 0) break;
+      ctx.beginPath();
+      let started = false;
+      for (const seg of obj.path.segments) {
+        if (seg.type !== 'line') continue;
+        if (!started) {
+          const from = documentToCanvas(seg.from, viewport);
+          ctx.moveTo(from.x, from.y);
+          started = true;
+        }
+        const to = documentToCanvas(seg.to, viewport);
+        ctx.lineTo(to.x, to.y);
+      }
+      if (started) ctx.stroke();
+      break;
+    }
   }
 
   ctx.setLineDash([]);
+}
+
+function drawResizeHandles(
+  ctx: CanvasRenderingContext2D,
+  obj: SceneObject,
+  viewport: ViewportState,
+): void {
+  const handles = getHandles(obj);
+  const SIZE = 7; // screen pixels
+
+  ctx.fillStyle = '#fff';
+  ctx.strokeStyle = '#4af';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([]);
+
+  for (const h of handles) {
+    const cv = documentToCanvas(h.pos, viewport);
+    ctx.fillRect(cv.x - SIZE / 2, cv.y - SIZE / 2, SIZE, SIZE);
+    ctx.strokeRect(cv.x - SIZE / 2, cv.y - SIZE / 2, SIZE, SIZE);
+  }
 }
 
 function drawGhostPreview(

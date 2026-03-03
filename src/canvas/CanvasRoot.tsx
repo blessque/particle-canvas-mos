@@ -28,6 +28,7 @@ export function CanvasRoot({ particlesRef, renderTick }: CanvasRootProps) {
     drawCurrent: s.drawCurrent,
     shiftHeld: s.shiftHeld,
     selectedObjectIds: s.selectedObjectIds,
+    pendingPath: s.pendingPath,
   }));
   const viewport = useUIStore((s) => s.viewport);
   const setViewport = useUIStore((s) => s.setViewport);
@@ -46,9 +47,14 @@ export function CanvasRoot({ particlesRef, renderTick }: CanvasRootProps) {
       if ('drawCurrent'        in partial) s.setDrawCurrent(partial.drawCurrent ?? null);
       if ('selectedObjectIds'  in partial) s.selectObjects(partial.selectedObjectIds!);
       if ('activeTool'         in partial) s.setActiveTool(partial.activeTool!);
+      if ('pendingPath'        in partial) s.setPendingPath(partial.pendingPath ?? null);
     },
     getToolState: () => useToolStore.getState(),
     getObjects: () => useSceneStore.getState().objects,
+    getScale: () => {
+      const vp = useUIStore.getState().viewport;
+      return Math.min(vp.canvasWidth / vp.documentWidth, vp.canvasHeight / vp.documentHeight);
+    },
   }), []);
 
   // Resize observer — keeps canvas pixel size and viewport in sync
@@ -108,6 +114,7 @@ export function CanvasRoot({ particlesRef, renderTick }: CanvasRootProps) {
     const docPt = canvasToDocument(canvasPt, useUIStore.getState().viewport);
     const tool = getToolInstance(useToolStore.getState().activeTool);
     tool.onPointerDown(e.nativeEvent, docPt, getCallbacks());
+    canvas.style.cursor = tool.getCursor();
   }, [getCallbacks]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -117,6 +124,8 @@ export function CanvasRoot({ particlesRef, renderTick }: CanvasRootProps) {
     const docPt = canvasToDocument(canvasPt, useUIStore.getState().viewport);
     const tool = getToolInstance(useToolStore.getState().activeTool);
     tool.onPointerMove(e.nativeEvent, docPt, getCallbacks());
+    // Update cursor imperatively so handle hover works without triggering a re-render
+    canvas.style.cursor = tool.getCursor();
   }, [getCallbacks]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -126,6 +135,7 @@ export function CanvasRoot({ particlesRef, renderTick }: CanvasRootProps) {
     const docPt = canvasToDocument(canvasPt, useUIStore.getState().viewport);
     const tool = getToolInstance(useToolStore.getState().activeTool);
     tool.onPointerUp(e.nativeEvent, docPt, getCallbacks());
+    canvas.style.cursor = tool.getCursor();
   }, [getCallbacks]);
 
   // Keyboard shortcuts
@@ -135,13 +145,12 @@ export function CanvasRoot({ particlesRef, renderTick }: CanvasRootProps) {
       const inInput = tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA';
 
       // Tool hotkeys always work — even when a slider is focused
-      // Uses e.code (physical key position) so hotkeys work in any keyboard language
-      type DrawToolType = 'select' | 'rectangle' | 'ellipse' | 'star';
-      const hotkeyMap: Record<string, DrawToolType> = {
+      const hotkeyMap: Record<string, 'select' | 'rectangle' | 'ellipse' | 'star' | 'freehand'> = {
         KeyV: 'select',
         KeyR: 'rectangle',
-        KeyE: 'ellipse',
+        KeyO: 'ellipse',
         KeyS: 'star',
+        KeyF: 'freehand',
       };
 
       const nextTool = hotkeyMap[e.code];

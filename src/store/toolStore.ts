@@ -9,6 +9,7 @@ interface ToolStoreState {
   drawCurrent: Point | null;
   shiftHeld: boolean;
   selectedObjectIds: string[];
+  pendingPath: Point[] | null;
 
   setActiveTool: (tool: ToolType) => void;
   setDrawing: (isDrawing: boolean) => void;
@@ -17,6 +18,7 @@ interface ToolStoreState {
   setShiftHeld: (held: boolean) => void;
   selectObjects: (ids: string[]) => void;
   clearSelection: () => void;
+  setPendingPath: (path: Point[] | null) => void;
 }
 
 export const useToolStore = create<ToolStoreState>((set) => ({
@@ -26,6 +28,7 @@ export const useToolStore = create<ToolStoreState>((set) => ({
   drawCurrent: null,
   shiftHeld: false,
   selectedObjectIds: [],
+  pendingPath: null,
 
   setActiveTool: (tool) => set({ activeTool: tool }),
   setDrawing: (isDrawing) => set({ isDrawing }),
@@ -34,4 +37,5 @@ export const useToolStore = create<ToolStoreState>((set) => ({
   setShiftHeld: (held) => set({ shiftHeld: held }),
   selectObjects: (ids) => set({ selectedObjectIds: ids }),
   clearSelection: () => set({ selectedObjectIds: [] }),
+  setPendingPath: (path) => set({ pendingPath: path }),
 }));
