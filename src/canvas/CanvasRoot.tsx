@@ -135,15 +135,16 @@ export function CanvasRoot({ particlesRef, renderTick }: CanvasRootProps) {
       const inInput = tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA';
 
       // Tool hotkeys always work — even when a slider is focused
+      // Uses e.code (physical key position) so hotkeys work in any keyboard language
       type DrawToolType = 'select' | 'rectangle' | 'ellipse' | 'star';
       const hotkeyMap: Record<string, DrawToolType> = {
-        v: 'select', V: 'select',
-        r: 'rectangle', R: 'rectangle',
-        e: 'ellipse', E: 'ellipse',
-        s: 'star', S: 'star',
+        KeyV: 'select',
+        KeyR: 'rectangle',
+        KeyE: 'ellipse',
+        KeyS: 'star',
       };
 
-      const nextTool = hotkeyMap[e.key];
+      const nextTool = hotkeyMap[e.code];
       if (nextTool) {
         useToolStore.getState().setActiveTool(nextTool);
         return;
