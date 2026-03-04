@@ -27,13 +27,15 @@ export default function App() {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#111112] text-white">
       {/* Left sidebar */}
-      <aside className="w-56 shrink-0 flex flex-col bg-slate-900 border-r border-slate-700/60 overflow-hidden">
-        <div className="px-3 py-3 border-b border-white/10">
-          <h1 className="text-sm font-semibold tracking-wide text-white/80">Particle Canvas</h1>
+      <aside className="w-56 shrink-0 flex flex-col border-r border-white/10 overflow-hidden">
+        <div className="px-3 py-4 border-b border-white/10">
+          <img src="/logo.svg" alt="Particle Canvas" className="h-9 w-auto" />
         </div>
-        <Toolbar />
-        <ParticlePanel />
-        <CanvasSizeSelector />
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <Toolbar />
+          <ParticlePanel />
+          <CanvasSizeSelector />
+        </div>
         <ExportButton
           getParticles={() => particlesRef.current}
           getConfig={() => useParticleStore.getState().config}

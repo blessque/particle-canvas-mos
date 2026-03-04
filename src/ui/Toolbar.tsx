@@ -12,17 +12,17 @@ interface ToolButton {
 }
 
 const ARC_MODES = [
-  { mode: 'full'    as const, icon: '◯', label: 'Full ellipse' },
-  { mode: 'half'    as const, icon: '⌓', label: 'Half arc' },
-  { mode: 'quarter' as const, icon: '◜', label: 'Quarter arc' },
+  { mode: 'full'    as const, icon: '◯', label: 'Полный эллипс' },
+  { mode: 'half'    as const, icon: '⌓', label: 'Полудуга' },
+  { mode: 'quarter' as const, icon: '◜', label: 'Четверть дуги' },
 ];
 
 const TOOLS: ToolButton[] = [
-  { type: 'select',    label: 'Select',    hotkey: 'V', icon: '↖' },
-  { type: 'rectangle', label: 'Rectangle', hotkey: 'R', icon: '▭' },
-  { type: 'ellipse',   label: 'Ellipse',   hotkey: 'O', icon: '◯' },
-  { type: 'star',      label: 'Star',      hotkey: 'S', icon: '★' },
-  { type: 'freehand',  label: 'Freehand',  hotkey: 'F', icon: '✏' },
+  { type: 'select',    label: 'Выделение',     hotkey: 'V', icon: '↖' },
+  { type: 'rectangle', label: 'Прямоугольник', hotkey: 'R', icon: '▭' },
+  { type: 'ellipse',   label: 'Эллипс',        hotkey: 'O', icon: '◯' },
+  { type: 'star',      label: 'Звезда',        hotkey: 'S', icon: '★' },
+  { type: 'freehand',  label: 'Рисование',      hotkey: 'F', icon: '✏' },
 ];
 
 export function Toolbar() {
@@ -38,7 +38,7 @@ export function Toolbar() {
 
   return (
     <div className="flex flex-col gap-1 p-2 border-b border-white/10">
-      <p className="text-xs text-white/40 uppercase tracking-widest px-1 pb-1">Tools</p>
+      <p className="text-xs text-white/40 uppercase tracking-widest px-1 pb-1">Инструменты</p>
       {TOOLS.map((tool) => (
         <Fragment key={tool.type}>
           <button
@@ -81,11 +81,11 @@ export function Toolbar() {
       <div className="mt-2 pt-2 border-t border-white/10">
         <button
           onClick={handleClear}
-          title="Clear all shapes from canvas"
-          className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm text-left text-red-400/70 hover:bg-red-500/10 hover:text-red-400 transition-colors"
+          title="Очистить все фигуры"
+          className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm text-left text-white/40 hover:bg-white/10 hover:text-white/70 transition-colors"
         >
           <span className="text-base w-5 text-center">⊘</span>
-          <span className="flex-1">Clear canvas</span>
+          <span className="flex-1">Очистить</span>
         </button>
       </div>
     </div>

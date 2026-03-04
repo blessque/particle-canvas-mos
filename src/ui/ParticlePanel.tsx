@@ -22,7 +22,7 @@ function SliderRow({
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <div className="flex justify-between text-xs text-white/50">
+      <div className="flex justify-between text-[13px] text-white/50">
         <span>{label}</span>
         <span className="font-mono text-white/70">{displayValue ?? value}</span>
       </div>
@@ -33,7 +33,7 @@ function SliderRow({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-blue-400 cursor-pointer"
+        className="w-full accent-white cursor-pointer"
       />
     </div>
   );
@@ -52,11 +52,11 @@ function SelectRow<T extends string>({
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-xs text-white/50">{label}</span>
+      <span className="text-[13px] text-white/50">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
-        className="bg-white/10 text-white/80 text-xs rounded px-2 py-1 border border-white/10 cursor-pointer"
+        className="bg-white/10 text-white/80 text-[13px] rounded px-2 py-1 border border-white/10 cursor-pointer"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
@@ -67,15 +67,15 @@ function SelectRow<T extends string>({
 }
 
 const SPAWN_OPTIONS: { value: SpawnDirection; label: string }[] = [
-  { value: 'outside', label: 'Outside' },
-  { value: 'inside',  label: 'Inside' },
-  { value: 'both',    label: 'Both' },
+  { value: 'outside', label: 'Наружу' },
+  { value: 'inside',  label: 'Внутрь' },
+  { value: 'both',    label: 'Во все стороны' },
 ];
 
 const FALLOFF_OPTIONS: { value: FalloffType; label: string }[] = [
-  { value: 'gaussian',    label: 'Gaussian' },
-  { value: 'linear',      label: 'Linear' },
-  { value: 'exponential', label: 'Exponential' },
+  { value: 'gaussian',    label: 'Гаусс' },
+  { value: 'linear',      label: 'Линейно' },
+  { value: 'exponential', label: 'Экспоненциально' },
 ];
 
 export function ParticlePanel() {
@@ -97,11 +97,11 @@ export function ParticlePanel() {
   }
 
   return (
-    <div className="flex flex-col gap-3 p-3 overflow-y-auto flex-1">
-      <p className="text-xs text-white/40 uppercase tracking-widest">Particles</p>
+    <div className="flex flex-col gap-3 p-3">
+      <p className="text-[11px] text-white/40 uppercase tracking-widest">Частицы</p>
 
       <SliderRow
-        label="Count"
+        label="Количество"
         value={config.count}
         min={100}
         max={20000}
@@ -110,7 +110,7 @@ export function ParticlePanel() {
       />
 
       <SliderRow
-        label="Size"
+        label="Размер"
         value={baseSize}
         min={0.5}
         max={8}
@@ -122,7 +122,7 @@ export function ParticlePanel() {
       />
 
       <SliderRow
-        label="Size Variance"
+        label="Разброс размера"
         value={sizeVariance}
         min={0}
         max={100}
@@ -135,7 +135,7 @@ export function ParticlePanel() {
       />
 
       <SliderRow
-        label="Opacity Variance"
+        label="Разброс прозрачности"
         value={Math.round(config.falloffBias * 100)}
         min={0}
         max={100}
@@ -145,7 +145,7 @@ export function ParticlePanel() {
       />
 
       <SliderRow
-        label="Falloff Distance"
+        label="Рассеивание"
         value={config.falloffDistance}
         min={5}
         max={200}
@@ -154,45 +154,43 @@ export function ParticlePanel() {
       />
 
       <SelectRow
-        label="Spawn Direction"
+        label="Направление"
         value={config.spawnDirection}
         options={SPAWN_OPTIONS}
         onChange={(v) => updateConfig({ spawnDirection: v })}
       />
 
       <SelectRow
-        label="Falloff Curve"
+        label="Кривая затухания"
         value={config.falloffType}
         options={FALLOFF_OPTIONS}
         onChange={(v) => updateConfig({ falloffType: v })}
       />
 
-      <div className="flex flex-col gap-0.5">
-        <span className="text-xs text-white/50">Color</span>
-        <input
-          type="color"
-          value={config.color}
-          onChange={(e) => updateConfig({ color: e.target.value })}
-          className="w-full h-8 rounded cursor-pointer bg-transparent border border-white/10"
-        />
-      </div>
-
       <button
         onClick={randomizeSeed}
-        className="text-xs text-white/50 hover:text-white/80 border border-white/10 hover:border-white/30 rounded px-2 py-1.5 transition-colors"
+        className="text-[13px] text-white/50 hover:text-white/80 border border-white/10 hover:border-white/30 rounded px-2 py-1.5 transition-colors"
       >
-        Randomize Seed
+        Перемешать
       </button>
 
-      <label className="flex items-center gap-2 text-xs text-white/60 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={showOutlines}
-          onChange={(e) => setShowOutlines(e.target.checked)}
-          className="accent-blue-400"
-        />
-        Show shape outlines
-      </label>
+      <div className="flex items-center justify-between">
+        <span className="text-[13px] text-white/60">Показывать контуры</span>
+        <button
+          role="switch"
+          aria-checked={showOutlines}
+          onClick={() => setShowOutlines(!showOutlines)}
+          className={[
+            'relative w-9 h-5 rounded-full transition-colors shrink-0 overflow-hidden',
+            showOutlines ? 'bg-white/70' : 'bg-white/20',
+          ].join(' ')}
+        >
+          <span className={[
+            'absolute top-[2px] left-0 w-4 h-4 rounded-full bg-white shadow transition-transform',
+            showOutlines ? 'translate-x-[18px]' : 'translate-x-[2px]',
+          ].join(' ')} />
+        </button>
+      </div>
     </div>
   );
 }

@@ -31,7 +31,7 @@ export interface Particle {
 export const DEFAULT_PARTICLE_CONFIG: ParticleConfig = {
   count: 3000,
   minSize: 1,
-  maxSize: 3,
+  maxSize: 1,
   color: '#ffffff',
   opacityRandomize: true,
   baseOpacity: 0.8,

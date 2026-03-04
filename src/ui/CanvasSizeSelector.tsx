@@ -14,7 +14,7 @@ export function CanvasSizeSelector() {
 
   return (
     <div className="p-2 border-b border-white/10">
-      <p className="text-xs text-white/40 uppercase tracking-widest px-1 pb-2">Canvas Size</p>
+      <p className="text-xs text-white/40 uppercase tracking-widest px-1 pb-2">Размер холста</p>
       <div className="flex flex-col gap-1">
         {SIZES.map(({ label, w, h }) => {
           const active = viewport.documentWidth === w && viewport.documentHeight === h;
