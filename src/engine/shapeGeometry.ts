@@ -53,23 +53,71 @@ function sampleEdge(p0: Point, p1: Point, center: Point, step: number): OutlineS
   return samples;
 }
 
+/**
+ * Fan-fill samples at a corner vertex between two edges.
+ * Sweeps the shorter arc from nA to nB, filling the convex exterior gap.
+ * Returns empty for concave corners (arc >= 180°) or near-straight edges.
+ */
+function sampleCorner(vertex: Point, nA: Point, nB: Point): OutlineSample[] {
+  const angleA = Math.atan2(nA.y, nA.x);
+  const angleB = Math.atan2(nB.y, nB.x);
+  let delta = angleB - angleA;
+  // Normalize to (-π, π] — always the shorter arc
+  while (delta > Math.PI) delta -= 2 * Math.PI;
+  while (delta < -Math.PI) delta += 2 * Math.PI;
+  // Skip near-straight edges and concave (reflex) corners
+  if (Math.abs(delta) < 0.01 || Math.abs(delta) >= Math.PI) return [];
+
+  const ANGLE_STEP = Math.PI / 16; // ~11.25° per sample
+  const n = Math.max(1, Math.round(Math.abs(delta) / ANGLE_STEP));
+  const samples: OutlineSample[] = [];
+  for (let i = 1; i < n; i++) {
+    const t = i / n;
+    const angle = angleA + delta * t;
+    samples.push({ point: vertex, normal: { x: Math.cos(angle), y: Math.sin(angle) } });
+  }
+  return samples;
+}
+
+/**
+ * Sample a closed polygon outline with per-edge normals and corner fan-fill.
+ * Eliminates the empty-wedge artefact at sharp corners.
+ */
+function samplePolygon(vertices: Point[], center: Point, step: number): OutlineSample[] {
+  const n = vertices.length;
+  const samples: OutlineSample[] = [];
+
+  // Pre-compute outward normals for every edge
+  const edgeNormals: Point[] = vertices.map((v, i) => {
+    const next = vertices[(i + 1) % n]!;
+    const dir = sub(next, v);
+    let normal = normalize(perp2D(normalize(dir)));
+    const mid: Point = { x: (v.x + next.x) / 2, y: (v.y + next.y) / 2 };
+    if (dot(normal, sub(mid, center)) < 0) normal = scale(normal, -1);
+    return normal;
+  });
+
+  for (let i = 0; i < n; i++) {
+    const p0 = vertices[i]!;
+    const p1 = vertices[(i + 1) % n]!;
+    const nCurr = edgeNormals[i]!;
+    const nNext = edgeNormals[(i + 1) % n]!;
+    samples.push(...sampleEdge(p0, p1, center, step));
+    // Fan-fill the corner at p1 (junction between edge i and edge i+1)
+    samples.push(...sampleCorner(p1, nCurr, nNext));
+  }
+  return samples;
+}
+
 function sampleRectangle(obj: SceneObject & { type: 'rectangle' }): OutlineSample[] {
   const { position: { x, y }, width, height } = obj;
-  const step = 2;
   const cx = x + width / 2;
   const cy = y + height / 2;
   const tl: Point = { x, y };
   const tr: Point = { x: x + width, y };
   const br: Point = { x: x + width, y: y + height };
   const bl: Point = { x, y: y + height };
-  const center: Point = { x: cx, y: cy };
-
-  return [
-    ...sampleEdge(tl, tr, center, step),
-    ...sampleEdge(tr, br, center, step),
-    ...sampleEdge(br, bl, center, step),
-    ...sampleEdge(bl, tl, center, step),
-  ];
+  return samplePolygon([tl, tr, br, bl], { x: cx, y: cy }, 2);
 }
 
 function sampleEllipse(obj: SceneObject & { type: 'ellipse' }): OutlineSample[] {
@@ -104,38 +152,48 @@ function sampleStar(obj: SceneObject & { type: 'star' }): OutlineSample[] {
   const cy = y + height / 2;
   const outerR = Math.min(width, height) / 2;
   const innerR = outerR * innerRadiusRatio;
-  const step = 2;
   const center: Point = { x: cx, y: cy };
-
   const verts = computeStarVertices(cx, cy, outerR, innerR, points);
-  const samples: OutlineSample[] = [];
-
-  for (let i = 0; i < verts.length; i++) {
-    const p0 = verts[i]!;
-    const p1 = verts[(i + 1) % verts.length]!;
-    samples.push(...sampleEdge(p0, p1, center, step));
-  }
-  return samples;
+  return samplePolygon(verts, center, 2);
 }
 
 function sampleFreehandPath(obj: FreehandObject): OutlineSample[] {
   const samples: OutlineSample[] = [];
-  for (const seg of obj.path.segments) {
+  const segs = obj.path.segments.filter((s) => s.type === 'line');
+
+  for (let i = 0; i < segs.length; i++) {
+    const seg = segs[i]!;
     if (seg.type !== 'line') continue;
     const dx = seg.to.x - seg.from.x;
     const dy = seg.to.y - seg.from.y;
     const len = Math.sqrt(dx * dx + dy * dy);
     if (len < 1) continue;
-    // Perpendicular normal (both sides handled by spawnDirection in distributor)
+    // Left-perpendicular normal (both sides handled by spawnDirection in distributor)
     const nx = -dy / len;
     const ny = dx / len;
+    const normal: Point = { x: nx, y: ny };
     const steps = Math.max(1, Math.floor(len / 2));
-    for (let i = 0; i <= steps; i++) {
-      const t = i / steps;
+    for (let j = 0; j <= steps; j++) {
+      const t = j / steps;
       samples.push({
         point: { x: seg.from.x + dx * t, y: seg.from.y + dy * t },
-        normal: { x: nx, y: ny },
+        normal,
       });
+    }
+
+    // Fan-fill the corner at the junction to the next segment
+    const nextSeg = segs[i + 1];
+    if (nextSeg && nextSeg.type === 'line') {
+      const ndx = nextSeg.to.x - nextSeg.from.x;
+      const ndy = nextSeg.to.y - nextSeg.from.y;
+      const nlen = Math.sqrt(ndx * ndx + ndy * ndy);
+      if (nlen >= 1) {
+        const nextNormal: Point = { x: -ndy / nlen, y: ndx / nlen };
+        // Fan for the left side (positive normals)
+        samples.push(...sampleCorner(seg.to, normal, nextNormal));
+        // Fan for the right side (negative normals — for 'both' and 'inside' spawn directions)
+        samples.push(...sampleCorner(seg.to, { x: -nx, y: -ny }, { x: ndy / nlen, y: -ndx / nlen }));
+      }
     }
   }
   return samples;
