@@ -15,11 +15,14 @@ interface UIStoreState {
   leftPanelOpen: boolean;
   exportDialogOpen: boolean;
   showOutlines: boolean;
+  ellipseMode: 'full' | 'half' | 'quarter';
 
   setViewport: (partial: Partial<ViewportState>) => void;
   toggleLeftPanel: () => void;
   setExportDialogOpen: (open: boolean) => void;
   setShowOutlines: (v: boolean) => void;
+  setDocumentSize: (w: number, h: number) => void;
+  setEllipseMode: (mode: 'full' | 'half' | 'quarter') => void;
 }
 
 export const useUIStore = create<UIStoreState>((set) => ({
@@ -35,6 +38,7 @@ export const useUIStore = create<UIStoreState>((set) => ({
   leftPanelOpen: true,
   exportDialogOpen: false,
   showOutlines: true,
+  ellipseMode: 'full',
 
   setViewport: (partial) =>
     set((state) => ({
@@ -47,4 +51,11 @@ export const useUIStore = create<UIStoreState>((set) => ({
   setExportDialogOpen: (open) => set({ exportDialogOpen: open }),
 
   setShowOutlines: (v) => set({ showOutlines: v }),
+
+  setDocumentSize: (w, h) =>
+    set((state) => ({
+      viewport: { ...state.viewport, documentWidth: w, documentHeight: h },
+    })),
+
+  setEllipseMode: (mode) => set({ ellipseMode: mode }),
 }));
