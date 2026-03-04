@@ -25,9 +25,9 @@ export default function App() {
   }, [objects, config]);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-neutral-700 text-white">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#111112] text-white">
       {/* Left sidebar */}
-      <aside className="w-56 shrink-0 flex flex-col bg-neutral-900 border-r border-white/10 overflow-hidden">
+      <aside className="w-56 shrink-0 flex flex-col bg-slate-900 border-r border-slate-700/60 overflow-hidden">
         <div className="px-3 py-3 border-b border-white/10">
           <h1 className="text-sm font-semibold tracking-wide text-white/80">Particle Canvas</h1>
         </div>
@@ -43,7 +43,7 @@ export default function App() {
       </aside>
 
       {/* Canvas area */}
-      <main className="flex-1 overflow-hidden bg-neutral-700 p-6">
+      <main className="flex-1 overflow-hidden bg-[#111112] p-6">
         <CanvasRoot particlesRef={particlesRef} renderTick={renderTick} />
       </main>
     </div>
