@@ -29,6 +29,8 @@ export interface RectangleObject extends SceneObjectBase {
 /** Ellipse shape */
 export interface EllipseObject extends SceneObjectBase {
   type: 'ellipse';
+  arcStartAngle: number; // 0 for full ellipse
+  arcEndAngle: number;   // Math.PI * 2 for full ellipse
 }
 
 /** Star shape */

@@ -3,6 +3,8 @@ import type { Point } from '@/types/geometry';
 import type { EllipseObject } from '@/types/scene';
 import { uid } from '@/utils/uid';
 import { dragToBBox, MIN_DRAG_SIZE } from './pointerUtils';
+import { useUIStore } from '@/store/uiStore';
+import { computeEllipseArcAngles } from '@/engine/shapeGeometry';
 
 export const EllipseTool: Tool = {
   name: 'ellipse',
@@ -30,6 +32,17 @@ export const EllipseTool: Tool = {
     const bbox = dragToBBox(state.drawStart, docPoint, state.shiftHeld);
     if (bbox.width < MIN_DRAG_SIZE || bbox.height < MIN_DRAG_SIZE) return;
 
+    const ellipseMode = useUIStore.getState().ellipseMode;
+    let arcStartAngle = 0;
+    let arcEndAngle = Math.PI * 2;
+    if (ellipseMode !== 'full') {
+      const dx = docPoint.x - state.drawStart.x;
+      const dy = docPoint.y - state.drawStart.y;
+      const angles = computeEllipseArcAngles(dx, dy, ellipseMode);
+      arcStartAngle = angles.start;
+      arcEndAngle = angles.end;
+    }
+
     const obj: EllipseObject = {
       id: uid(),
       type: 'ellipse',
@@ -39,6 +52,8 @@ export const EllipseTool: Tool = {
       rotation: 0,
       visible: true,
       locked: false,
+      arcStartAngle,
+      arcEndAngle,
     };
     cbs.addObject(obj);
     cbs.setToolState({ activeTool: 'select' });

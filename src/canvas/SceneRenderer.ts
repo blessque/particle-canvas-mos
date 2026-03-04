@@ -1,4 +1,4 @@
-import type { SceneObject, FreehandObject } from '@/types/scene';
+import type { SceneObject, EllipseObject, FreehandObject } from '@/types/scene';
 import type { ViewportState } from '@/store/uiStore';
 import { documentToCanvas, scaleToCanvas } from '@/utils/coordinates';
 import { computeStarVertices } from '@/engine/shapeGeometry';
@@ -62,7 +62,7 @@ function drawRectangleOutline(
 
 function drawEllipseOutline(
   ctx: CanvasRenderingContext2D,
-  obj: SceneObject,
+  obj: EllipseObject,
   viewport: ViewportState,
 ): void {
   const center = documentToCanvas(
@@ -72,7 +72,7 @@ function drawEllipseOutline(
   const rx = scaleToCanvas(obj.width / 2, viewport);
   const ry = scaleToCanvas(obj.height / 2, viewport);
   ctx.beginPath();
-  ctx.ellipse(center.x, center.y, rx, ry, 0, 0, Math.PI * 2);
+  ctx.ellipse(center.x, center.y, rx, ry, 0, obj.arcStartAngle, obj.arcEndAngle);
   ctx.stroke();
 }
 

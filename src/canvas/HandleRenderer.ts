@@ -1,8 +1,8 @@
 import type { ToolState } from '@/types/tools';
-import type { SceneObject } from '@/types/scene';
+import type { SceneObject, EllipseObject } from '@/types/scene';
 import type { ViewportState } from '@/store/uiStore';
 import { documentToCanvas, scaleToCanvas } from '@/utils/coordinates';
-import { computeStarVertices } from '@/engine/shapeGeometry';
+import { computeStarVertices, computeEllipseArcAngles } from '@/engine/shapeGeometry';
 import { getHandles } from '@/utils/handleUtils';
 
 /**
@@ -14,6 +14,7 @@ export function renderHandles(
   toolState: ToolState,
   objects: SceneObject[],
   viewport: ViewportState,
+  ellipseMode: 'full' | 'half' | 'quarter',
 ): void {
   ctx.save();
 
@@ -29,7 +30,7 @@ export function renderHandles(
   // Draw ghost preview while user is actively drawing a shape
   if (toolState.isDrawing && toolState.drawStart && toolState.drawCurrent &&
       toolState.activeTool !== 'freehand' && toolState.activeTool !== 'select') {
-    drawGhostPreview(ctx, toolState, viewport);
+    drawGhostPreview(ctx, toolState, viewport, ellipseMode);
   }
 
   // Freehand live preview
@@ -70,6 +71,7 @@ function drawSelectionOutline(
       break;
     }
     case 'ellipse': {
+      const ellipseObj = obj as EllipseObject;
       const center = documentToCanvas(
         { x: obj.position.x + obj.width / 2, y: obj.position.y + obj.height / 2 },
         viewport,
@@ -77,7 +79,7 @@ function drawSelectionOutline(
       const rx = scaleToCanvas(obj.width / 2 + 2, viewport);
       const ry = scaleToCanvas(obj.height / 2 + 2, viewport);
       ctx.beginPath();
-      ctx.ellipse(center.x, center.y, rx, ry, 0, 0, Math.PI * 2);
+      ctx.ellipse(center.x, center.y, rx, ry, 0, ellipseObj.arcStartAngle, ellipseObj.arcEndAngle);
       ctx.stroke();
       break;
     }
@@ -143,6 +145,7 @@ function drawGhostPreview(
   ctx: CanvasRenderingContext2D,
   toolState: ToolState,
   viewport: ViewportState,
+  ellipseMode: 'full' | 'half' | 'quarter',
 ): void {
   const { activeTool, drawStart, drawCurrent, shiftHeld } = toolState;
   if (!drawStart || !drawCurrent) return;
@@ -175,8 +178,17 @@ function drawGhostPreview(
   } else if (activeTool === 'ellipse') {
     const cx = tl.x + cw / 2;
     const cy = tl.y + ch / 2;
+    let arcStart = 0;
+    let arcEnd = Math.PI * 2;
+    if (ellipseMode !== 'full') {
+      const dx = drawCurrent.x - drawStart.x;
+      const dy = drawCurrent.y - drawStart.y;
+      const angles = computeEllipseArcAngles(dx, dy, ellipseMode);
+      arcStart = angles.start;
+      arcEnd = angles.end;
+    }
     ctx.beginPath();
-    ctx.ellipse(cx, cy, cw / 2, ch / 2, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy, cw / 2, ch / 2, 0, arcStart, arcEnd);
     ctx.stroke();
   } else if (activeTool === 'star') {
     const docCx = x + w / 2;

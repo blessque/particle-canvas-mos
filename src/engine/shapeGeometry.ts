@@ -1,5 +1,5 @@
 import type { Point } from '@/types/geometry';
-import type { SceneObject, FreehandObject } from '@/types/scene';
+import type { SceneObject, EllipseObject, FreehandObject } from '@/types/scene';
 import { sub, normalize, perp2D, dot, scale } from './vectorMath';
 
 export interface OutlineSample {
@@ -120,20 +120,47 @@ function sampleRectangle(obj: SceneObject & { type: 'rectangle' }): OutlineSampl
   return samplePolygon([tl, tr, br, bl], { x: cx, y: cy }, 2);
 }
 
-function sampleEllipse(obj: SceneObject & { type: 'ellipse' }): OutlineSample[] {
-  const { position: { x, y }, width, height } = obj;
+/**
+ * Compute arc start/end angles from a drag delta vector and ellipse mode.
+ * Uses canvas coordinate convention (Y-down, clockwise angles).
+ */
+export function computeEllipseArcAngles(
+  dx: number,
+  dy: number,
+  mode: 'half' | 'quarter',
+): { start: number; end: number } {
+  if (mode === 'quarter') {
+    // dy < 0 = dragging up on screen (doc Y increases downward)
+    if (dx >= 0 && dy <= 0) return { start: 0, end: Math.PI / 2 };
+    if (dx >= 0 && dy > 0)  return { start: (3 * Math.PI) / 2, end: 2 * Math.PI };
+    if (dx < 0 && dy <= 0)  return { start: Math.PI / 2, end: Math.PI };
+    return { start: Math.PI, end: (3 * Math.PI) / 2 };
+  }
+  // half
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    if (dy <= 0) return { start: Math.PI, end: 2 * Math.PI }; // top half (rainbow arch)
+    return { start: 0, end: Math.PI };                         // bottom half
+  }
+  if (dx > 0) return { start: -(Math.PI / 2), end: Math.PI / 2 }; // right half
+  return { start: Math.PI / 2, end: (3 * Math.PI) / 2 };          // left half
+}
+
+function sampleEllipse(obj: EllipseObject): OutlineSample[] {
+  const { position: { x, y }, width, height, arcStartAngle, arcEndAngle } = obj;
   const cx = x + width / 2;
   const cy = y + height / 2;
   const rx = width / 2;
   const ry = height / 2;
   if (rx <= 0 || ry <= 0) return [];
 
+  const arcRange = arcEndAngle - arcStartAngle;
+  const arcFraction = arcRange / (2 * Math.PI);
   const circumference = Math.PI * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry)));
-  const n = Math.max(8, Math.floor(circumference / 2));
+  const n = Math.max(8, Math.floor(circumference * arcFraction / 2));
   const samples: OutlineSample[] = [];
 
   for (let i = 0; i < n; i++) {
-    const t = (2 * Math.PI * i) / n;
+    const t = arcStartAngle + (arcRange * i) / n;
     const px = cx + Math.cos(t) * rx;
     const py = cy + Math.sin(t) * ry;
     // Ellipse outward normal is the gradient of (x/rx)^2 + (y/ry)^2 = 1
