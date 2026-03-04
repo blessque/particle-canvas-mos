@@ -33,6 +33,7 @@ export function CanvasRoot({ particlesRef, renderTick }: CanvasRootProps) {
   const viewport = useUIStore((s) => s.viewport);
   const setViewport = useUIStore((s) => s.setViewport);
   const showOutlines = useUIStore((s) => s.showOutlines);
+  const ellipseMode = useUIStore((s) => s.ellipseMode);
   const config = useParticleStore((s) => s.config);
 
   // Build tool callbacks (stable reference via useCallback)
@@ -95,15 +96,15 @@ export function CanvasRoot({ particlesRef, renderTick }: CanvasRootProps) {
     const scale = Math.min(vp.canvasWidth / vp.documentWidth, vp.canvasHeight / vp.documentHeight);
     const offsetX = (vp.canvasWidth - vp.documentWidth * scale) / 2;
     const offsetY = (vp.canvasHeight - vp.documentHeight * scale) / 2;
-    ctx.fillStyle = '#111114';
+    ctx.fillStyle = '#000000';
     ctx.fillRect(offsetX, offsetY, vp.documentWidth * scale, vp.documentHeight * scale);
 
     if (showOutlines) renderScene(ctx, objects, viewport);
     renderParticles(ctx, particlesRef.current ?? [], config, viewport);
-    renderHandles(ctx, toolState, objects, viewport);
+    renderHandles(ctx, toolState, objects, viewport, ellipseMode);
 
     ctx.restore();
-  }, [renderTick, objects, toolState, viewport, config, particlesRef, showOutlines]);
+  }, [renderTick, objects, toolState, viewport, config, particlesRef, showOutlines, ellipseMode]);
 
   // Pointer handlers
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -143,6 +144,15 @@ export function CanvasRoot({ particlesRef, renderTick }: CanvasRootProps) {
     const onKeyDown = (e: KeyboardEvent) => {
       const tag = document.activeElement?.tagName;
       const inInput = tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA';
+
+      // ⌥O cycles ellipse arc mode (full → half → quarter → full)
+      if (e.code === 'KeyO' && e.altKey) {
+        const modes = ['full', 'half', 'quarter'] as const;
+        const current = useUIStore.getState().ellipseMode;
+        const idx = modes.indexOf(current);
+        useUIStore.getState().setEllipseMode(modes[(idx + 1) % modes.length]!);
+        return;
+      }
 
       // Tool hotkeys always work — even when a slider is focused
       const hotkeyMap: Record<string, 'select' | 'rectangle' | 'ellipse' | 'star' | 'freehand'> = {

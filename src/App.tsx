@@ -8,6 +8,7 @@ import { CanvasRoot } from '@/canvas/CanvasRoot';
 import { Toolbar } from '@/ui/Toolbar';
 import { ParticlePanel } from '@/ui/ParticlePanel';
 import { ExportButton } from '@/ui/ExportButton';
+import { CanvasSizeSelector } from '@/ui/CanvasSizeSelector';
 
 export default function App() {
   const particlesRef = useRef<Particle[]>([]);
@@ -24,7 +25,7 @@ export default function App() {
   }, [objects, config]);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-neutral-950 text-white">
+    <div className="flex h-screen w-screen overflow-hidden bg-neutral-700 text-white">
       {/* Left sidebar */}
       <aside className="w-56 shrink-0 flex flex-col bg-neutral-900 border-r border-white/10 overflow-hidden">
         <div className="px-3 py-3 border-b border-white/10">
@@ -32,6 +33,7 @@ export default function App() {
         </div>
         <Toolbar />
         <ParticlePanel />
+        <CanvasSizeSelector />
         <ExportButton
           getParticles={() => particlesRef.current}
           getConfig={() => useParticleStore.getState().config}
@@ -41,7 +43,7 @@ export default function App() {
       </aside>
 
       {/* Canvas area */}
-      <main className="flex-1 overflow-hidden bg-neutral-950">
+      <main className="flex-1 overflow-hidden bg-neutral-700 p-6">
         <CanvasRoot particlesRef={particlesRef} renderTick={renderTick} />
       </main>
     </div>
