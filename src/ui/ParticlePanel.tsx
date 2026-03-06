@@ -22,7 +22,7 @@ function SliderRow({
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <div className="flex justify-between text-[13px] text-white/50">
+      <div className="flex justify-between text-[15px] text-white/50">
         <span>{label}</span>
         <span className="font-mono text-white/70">{displayValue ?? value}</span>
       </div>
@@ -52,11 +52,11 @@ function SelectRow<T extends string>({
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[13px] text-white/50">{label}</span>
+      <span className="text-[15px] text-white/50">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
-        className="bg-white/10 text-white/80 text-[13px] rounded px-2 py-1 border border-white/10 cursor-pointer"
+        className="bg-white/10 text-white/80 text-[15px] rounded px-2 py-1.5 border border-white/10 cursor-pointer"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
@@ -98,7 +98,7 @@ export function ParticlePanel() {
 
   return (
     <div className="flex flex-col gap-3 p-3">
-      <p className="text-[11px] text-white/40 uppercase tracking-widest">Частицы</p>
+      <p className="text-[13px] text-white/40 uppercase tracking-widest">Частицы</p>
 
       <SliderRow
         label="Количество"
@@ -169,13 +169,13 @@ export function ParticlePanel() {
 
       <button
         onClick={randomizeSeed}
-        className="text-[13px] text-white/50 hover:text-white/80 border border-white/10 hover:border-white/30 rounded px-2 py-1.5 transition-colors"
+        className="text-[15px] text-white/50 hover:text-white/80 border border-white/10 hover:border-white/30 rounded px-2 py-2 transition-colors"
       >
         Перемешать
       </button>
 
       <div className="flex items-center justify-between">
-        <span className="text-[13px] text-white/60">Показывать контуры</span>
+        <span className="text-[15px] text-white/60">Показывать контуры</span>
         <button
           role="switch"
           aria-checked={showOutlines}

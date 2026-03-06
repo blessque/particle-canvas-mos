@@ -1,4 +1,4 @@
-import type { SceneObject, EllipseObject, FreehandObject } from '@/types/scene';
+import type { SceneObject, EllipseObject, FreehandObject, SVGImportObject } from '@/types/scene';
 import type { ViewportState } from '@/store/uiStore';
 import { documentToCanvas, scaleToCanvas } from '@/utils/coordinates';
 import { computeStarVertices } from '@/engine/shapeGeometry';
@@ -41,6 +41,9 @@ function drawObjectOutline(
       break;
     case 'freehand':
       drawFreehandOutline(ctx, obj, viewport);
+      break;
+    case 'svg-import':
+      drawSVGImportOutline(ctx, obj as SVGImportObject, viewport);
       break;
     default:
       break;
@@ -116,4 +119,30 @@ function drawFreehandOutline(
     ctx.lineTo(to.x, to.y);
   }
   if (started) ctx.stroke();
+}
+
+function drawSVGImportOutline(
+  ctx: CanvasRenderingContext2D,
+  obj: SVGImportObject,
+  viewport: ViewportState,
+): void {
+  for (const path of obj.paths) {
+    if (path.segments.length === 0) continue;
+    ctx.beginPath();
+    let started = false;
+    for (const seg of path.segments) {
+      if (seg.type !== 'line') continue;
+      if (!started) {
+        const from = documentToCanvas(seg.from, viewport);
+        ctx.moveTo(from.x, from.y);
+        started = true;
+      }
+      const to = documentToCanvas(seg.to, viewport);
+      ctx.lineTo(to.x, to.y);
+    }
+    if (started) {
+      if (path.closed) ctx.closePath();
+      ctx.stroke();
+    }
+  }
 }

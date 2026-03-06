@@ -116,6 +116,15 @@ function drawSelectionOutline(
       if (started) ctx.stroke();
       break;
     }
+    case 'svg-import': {
+      const tl = documentToCanvas(obj.position, viewport);
+      const w = scaleToCanvas(obj.width, viewport);
+      const h = scaleToCanvas(obj.height, viewport);
+      ctx.beginPath();
+      ctx.rect(tl.x - 2, tl.y - 2, w + 4, h + 4);
+      ctx.stroke();
+      break;
+    }
   }
 
   ctx.setLineDash([]);

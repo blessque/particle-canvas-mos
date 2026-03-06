@@ -1,5 +1,5 @@
-import type { Point } from '@/types/geometry';
-import type { SceneObject, EllipseObject, FreehandObject } from '@/types/scene';
+import type { Point, Path } from '@/types/geometry';
+import type { SceneObject, EllipseObject, FreehandObject, SVGImportObject } from '@/types/scene';
 import { sub, normalize, perp2D, dot, scale } from './vectorMath';
 
 export interface OutlineSample {
@@ -184,9 +184,9 @@ function sampleStar(obj: SceneObject & { type: 'star' }): OutlineSample[] {
   return samplePolygon(verts, center, 2);
 }
 
-function sampleFreehandPath(obj: FreehandObject): OutlineSample[] {
+function sampleOnePath(path: Path): OutlineSample[] {
   const samples: OutlineSample[] = [];
-  const segs = obj.path.segments.filter((s) => s.type === 'line');
+  const segs = path.segments.filter((s) => s.type === 'line');
 
   for (let i = 0; i < segs.length; i++) {
     const seg = segs[i]!;
@@ -195,9 +195,8 @@ function sampleFreehandPath(obj: FreehandObject): OutlineSample[] {
     const dy = seg.to.y - seg.from.y;
     const len = Math.sqrt(dx * dx + dy * dy);
     if (len < 1) continue;
-    // Left-perpendicular normal (both sides handled by spawnDirection in distributor)
     const nx = -dy / len;
-    const ny = dx / len;
+    const ny =  dx / len;
     const normal: Point = { x: nx, y: ny };
     const steps = Math.max(1, Math.floor(len / 2));
     for (let j = 0; j <= steps; j++) {
@@ -208,7 +207,6 @@ function sampleFreehandPath(obj: FreehandObject): OutlineSample[] {
       });
     }
 
-    // Fan-fill the corner at the junction to the next segment
     const nextSeg = segs[i + 1];
     if (nextSeg && nextSeg.type === 'line') {
       const ndx = nextSeg.to.x - nextSeg.from.x;
@@ -216,14 +214,20 @@ function sampleFreehandPath(obj: FreehandObject): OutlineSample[] {
       const nlen = Math.sqrt(ndx * ndx + ndy * ndy);
       if (nlen >= 1) {
         const nextNormal: Point = { x: -ndy / nlen, y: ndx / nlen };
-        // Fan for the left side (positive normals)
         samples.push(...sampleCorner(seg.to, normal, nextNormal));
-        // Fan for the right side (negative normals — for 'both' and 'inside' spawn directions)
         samples.push(...sampleCorner(seg.to, { x: -nx, y: -ny }, { x: ndy / nlen, y: -ndx / nlen }));
       }
     }
   }
   return samples;
+}
+
+function sampleFreehandPath(obj: FreehandObject): OutlineSample[] {
+  return sampleOnePath(obj.path);
+}
+
+function sampleSVGPaths(obj: SVGImportObject): OutlineSample[] {
+  return obj.paths.flatMap((path) => sampleOnePath(path));
 }
 
 /**
@@ -235,8 +239,9 @@ export function sampleShapeOutline(obj: SceneObject): OutlineSample[] {
     case 'rectangle': return sampleRectangle(obj);
     case 'ellipse':   return sampleEllipse(obj);
     case 'star':      return sampleStar(obj);
-    case 'freehand':  return sampleFreehandPath(obj);
-    default:          return [];
+    case 'freehand':    return sampleFreehandPath(obj);
+    case 'svg-import':  return sampleSVGPaths(obj as SVGImportObject);
+    default:            return [];
   }
 }
 

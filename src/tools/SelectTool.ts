@@ -53,6 +53,18 @@ function scalePath(
   };
 }
 
+function translatePaths(paths: Path[], dx: number, dy: number): Path[] {
+  return paths.map((p) => translatePath(p, dx, dy));
+}
+
+function scalePaths(
+  paths: Path[],
+  orig: { x: number; y: number; w: number; h: number },
+  newBox: { x: number; y: number; w: number; h: number },
+): Path[] {
+  return paths.map((p) => scalePath(p, orig, newBox));
+}
+
 function scalePoint(
   pt: Point,
   orig: { x: number; y: number; w: number; h: number },
@@ -67,7 +79,8 @@ interface DragEntry {
   id: string;
   ox: number;
   oy: number;
-  origPath?: Path; // stored for FreehandObject so we can translate all points
+  origPath?: Path;   // FreehandObject
+  origPaths?: Path[]; // SVGImportObject
 }
 
 let dragBase: Point | null = null;
@@ -77,6 +90,7 @@ let resizeHandle: HandleId | null = null;
 let resizeObjId: string | null = null;
 let resizeOrig: { x: number; y: number; w: number; h: number } | null = null;
 let resizeOrigPath: Path | null = null;
+let resizeOrigPaths: Path[] | null = null;
 let hoverCursor = 'default';
 
 export const SelectTool: Tool = {
@@ -101,7 +115,8 @@ export const SelectTool: Tool = {
             resizeHandle = h.id;
             resizeObjId = selObj.id;
             resizeOrig = { x: selObj.position.x, y: selObj.position.y, w: selObj.width, h: selObj.height };
-            resizeOrigPath = selObj.type === 'freehand' ? selObj.path : null;
+            resizeOrigPath  = selObj.type === 'freehand'    ? selObj.path  : null;
+            resizeOrigPaths = selObj.type === 'svg-import'  ? selObj.paths : null;
             hoverCursor = h.cursor;
             cbs.setToolState({ isDrawing: true });
             return;
@@ -132,7 +147,8 @@ export const SelectTool: Tool = {
           id: o.id,
           ox: o.position.x,
           oy: o.position.y,
-          origPath: o.type === 'freehand' ? o.path : undefined,
+          origPath:  o.type === 'freehand'   ? o.path  : undefined,
+          origPaths: o.type === 'svg-import' ? o.paths : undefined,
         }));
       hoverCursor = 'move';
       cbs.setToolState({ isDrawing: true });
@@ -150,11 +166,16 @@ export const SelectTool: Tool = {
     // Resize in progress
     if (resizeHandle && resizeOrig && resizeObjId) {
       const result = applyResize(resizeHandle, docPoint, resizeOrig, state.shiftHeld);
+      const newBox = { x: result.position.x, y: result.position.y, w: result.width, h: result.height };
       if (resizeOrigPath) {
-        const newBox = { x: result.position.x, y: result.position.y, w: result.width, h: result.height };
         cbs.updateObject(resizeObjId, {
           ...result,
           path: scalePath(resizeOrigPath, resizeOrig, newBox),
+        } as unknown as Partial<SceneObject>);
+      } else if (resizeOrigPaths) {
+        cbs.updateObject(resizeObjId, {
+          ...result,
+          paths: scalePaths(resizeOrigPaths, resizeOrig, newBox),
         } as unknown as Partial<SceneObject>);
       } else {
         cbs.updateObject(resizeObjId, result);
@@ -171,6 +192,11 @@ export const SelectTool: Tool = {
           cbs.updateObject(entry.id, {
             position: { x: entry.ox + dx, y: entry.oy + dy },
             path: translatePath(entry.origPath, dx, dy),
+          } as unknown as Partial<SceneObject>);
+        } else if (entry.origPaths) {
+          cbs.updateObject(entry.id, {
+            position: { x: entry.ox + dx, y: entry.oy + dy },
+            paths: translatePaths(entry.origPaths, dx, dy),
           } as unknown as Partial<SceneObject>);
         } else {
           cbs.updateObject(entry.id, {
@@ -218,6 +244,7 @@ export const SelectTool: Tool = {
     resizeObjId = null;
     resizeOrig = null;
     resizeOrigPath = null;
+    resizeOrigPaths = null;
     dragBase = null;
     dragObjPositions = [];
   },

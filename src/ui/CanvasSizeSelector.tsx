@@ -14,7 +14,7 @@ export function CanvasSizeSelector() {
 
   return (
     <div className="p-2 border-b border-white/10">
-      <p className="text-xs text-white/40 uppercase tracking-widest px-1 pb-2">Размер холста</p>
+      <p className="text-[13px] text-white/40 uppercase tracking-widest px-1 pb-2">Размер холста</p>
       <div className="flex flex-col gap-1">
         {SIZES.map(({ label, w, h }) => {
           const active = viewport.documentWidth === w && viewport.documentHeight === h;
@@ -23,14 +23,14 @@ export function CanvasSizeSelector() {
               key={label}
               onClick={() => setDocumentSize(w, h)}
               className={[
-                'flex items-center justify-between px-2 py-1.5 rounded text-sm transition-colors',
+                'flex items-center justify-between px-2 py-2 rounded text-base transition-colors',
                 active
                   ? 'bg-white/15 text-white'
                   : 'text-white/60 hover:bg-white/10 hover:text-white',
               ].join(' ')}
             >
               <span>{label}</span>
-              <span className="text-xs text-white/30">{w}×{h}</span>
+              <span className="text-[13px] text-white/30 font-regular">{w}×{h}</span>
             </button>
           );
         })}

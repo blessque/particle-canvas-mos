@@ -3,46 +3,27 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: 'ALSGorizont';
-  font-weight: 100;
-  src: url('/fonts/ALSGorizont2.1-ThinExpanded.woff2') format('woff2'),
-       url('/fonts/ALSGorizont2.1-ThinExpanded.woff') format('woff');
-}
-@font-face {
-  font-family: 'ALSGorizont';
-  font-weight: 300;
-  src: url('/fonts/ALSGorizont2.1-LightExpanded.woff2') format('woff2'),
-       url('/fonts/ALSGorizont2.1-LightExpanded.woff') format('woff');
-}
-@font-face {
-  font-family: 'ALSGorizont';
+  font-family: 'ALSHaussNext';
   font-weight: 400;
-  src: url('/fonts/ALSGorizont2.1-RegularExpanded.woff2') format('woff2'),
-       url('/fonts/ALSGorizont2.1-RegularExpanded.woff') format('woff');
+  font-style: normal;
+  src: url('/fonts/ALSHaussNext-Regular.woff2') format('woff2'),
+       url('/fonts/ALSHaussNext-Regular.woff') format('woff');
 }
+
 @font-face {
-  font-family: 'ALSGorizont';
-  font-weight: 500;
-  src: url('/fonts/ALSGorizont2.1-MediumExpanded.woff2') format('woff2'),
-       url('/fonts/ALSGorizont2.1-MediumExpanded.woff') format('woff');
-}
-@font-face {
-  font-family: 'ALSGorizont';
+  font-family: 'ALSHaussNextWide';
   font-weight: 700;
-  src: url('/fonts/ALSGorizont2.1-BoldExpanded.woff2') format('woff2'),
-       url('/fonts/ALSGorizont2.1-BoldExpanded.woff') format('woff');
+  font-style: normal;
+  src: url('/fonts/ALSHaussNext-WideBold.woff2') format('woff2'),
+       url('/fonts/ALSHaussNext-WideBold.woff') format('woff');
 }
+
 @font-face {
-  font-family: 'ALSGorizont';
-  font-weight: 800;
-  src: url('/fonts/ALSGorizont2.1-ExtraBoldExpanded.woff2') format('woff2'),
-       url('/fonts/ALSGorizont2.1-ExtraBoldExpanded.woff') format('woff');
-}
-@font-face {
-  font-family: 'ALSGorizont';
-  font-weight: 900;
-  src: url('/fonts/ALSGorizont2.1-Black.woff2') format('woff2'),
-       url('/fonts/ALSGorizont2.1-Black.woff') format('woff');
+  font-family: 'ALSHaussMono';
+  font-weight: 400;
+  font-style: normal;
+  src: url('/fonts/ALSHaussMono-Regular.woff2') format('woff2'),
+       url('/fonts/ALSHaussMono-Regular.woff') format('woff');
 }
 
 *, *::before, *::after {
@@ -50,5 +31,19 @@
 }
 
 body {
-  font-family: 'ALSGorizont', sans-serif;
+  font-family: 'ALSHaussNext', sans-serif;
+}
+
+button {
+  font-family: 'ALSHaussNextWide', sans-serif;
+}
+
+/* Monospace: numbers, values, hotkeys, code */
+.font-mono, code, kbd, pre {
+  font-family: 'ALSHaussMono', monospace;
+}
+
+/* Regular weight override for use inside buttons (e.g. canvas dimensions) */
+.font-regular {
+  font-family: 'ALSHaussNext', sans-serif;
 }

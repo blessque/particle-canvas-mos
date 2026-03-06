@@ -27,7 +27,7 @@ export default function App() {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#111112] text-white">
       {/* Left sidebar */}
-      <aside className="w-56 shrink-0 flex flex-col border-r border-white/10 overflow-hidden">
+      <aside className="w-64 shrink-0 flex flex-col border-r border-white/10 overflow-hidden">
         <div className="px-3 py-4 border-b border-white/10">
           <img src="/logo.svg" alt="Particle Canvas" className="h-9 w-auto" />
         </div>
