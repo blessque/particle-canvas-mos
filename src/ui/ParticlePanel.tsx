@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParticleStore } from '@/store/particleStore';
 import { useUIStore } from '@/store/uiStore';
 import type { SpawnDirection, FalloffType } from '@/types/particles';
@@ -78,12 +78,77 @@ const FALLOFF_OPTIONS: { value: FalloffType; label: string }[] = [
   { value: 'exponential', label: 'Экспоненциально' },
 ];
 
+function ColorSlot({
+  label,
+  color,
+  onChange,
+}: {
+  label: string;
+  color: string;
+  onChange: (c: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const colorOnOpenRef = useRef<string>(color);
+  const [history, setHistory] = useState<string[]>([]);
+
+  // Native 'change' fires once when OS picker is closed/committed (not on every drag pixel)
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+    const handleCommit = () => {
+      const prev = colorOnOpenRef.current;
+      if (input.value !== prev) {
+        setHistory((h) => [prev, ...h.filter((x) => x !== prev)].slice(0, 5));
+      }
+    };
+    input.addEventListener('change', handleCommit);
+    return () => input.removeEventListener('change', handleCommit);
+  }, []);
+
+  function handleOpen() {
+    colorOnOpenRef.current = color;
+    inputRef.current?.click();
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-[13px] text-white/40">{label}</span>
+      <button
+        onClick={handleOpen}
+        className="w-20 h-20 rounded-full border-2 border-white/20 cursor-pointer shrink-0"
+        style={{ backgroundColor: color }}
+      />
+      <input
+        ref={inputRef}
+        type="color"
+        value={color}
+        onChange={(e) => onChange(e.target.value)}
+        className="sr-only"
+      />
+      {history.length > 0 && (
+        <div className="flex gap-1 flex-wrap">
+          {history.map((c) => (
+            <button
+              key={c}
+              onClick={() => onChange(c)}
+              className="w-3.5 h-3.5 rounded-full border border-white/20 cursor-pointer shrink-0"
+              style={{ backgroundColor: c }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ParticlePanel() {
   const config = useParticleStore((s) => s.config);
   const updateConfig = useParticleStore((s) => s.updateConfig);
   const randomizeSeed = useParticleStore((s) => s.randomizeSeed);
   const showOutlines = useUIStore((s) => s.showOutlines);
   const setShowOutlines = useUIStore((s) => s.setShowOutlines);
+  const canvasColor = useUIStore((s) => s.canvasColor);
+  const setCanvasColor = useUIStore((s) => s.setCanvasColor);
 
   const [baseSize, setBaseSize] = useState(config.minSize);
   const [sizeVariance, setSizeVariance] = useState(0);
@@ -99,6 +164,19 @@ export function ParticlePanel() {
   return (
     <div className="flex flex-col gap-3 p-3">
       <p className="text-[13px] text-white/40 uppercase tracking-widest">Частицы</p>
+
+      <div className="flex gap-6 border-b border-white/10 pb-3">
+        <ColorSlot
+          label="Цвет холста"
+          color={canvasColor}
+          onChange={setCanvasColor}
+        />
+        <ColorSlot
+          label="Цвет частиц"
+          color={config.color}
+          onChange={(c) => updateConfig({ color: c })}
+        />
+      </div>
 
       <SliderRow
         label="Количество"

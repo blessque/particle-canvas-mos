@@ -16,6 +16,7 @@ interface UIStoreState {
   exportDialogOpen: boolean;
   showOutlines: boolean;
   ellipseMode: 'full' | 'half' | 'quarter';
+  canvasColor: string;
 
   setViewport: (partial: Partial<ViewportState>) => void;
   toggleLeftPanel: () => void;
@@ -23,6 +24,7 @@ interface UIStoreState {
   setShowOutlines: (v: boolean) => void;
   setDocumentSize: (w: number, h: number) => void;
   setEllipseMode: (mode: 'full' | 'half' | 'quarter') => void;
+  setCanvasColor: (c: string) => void;
 }
 
 export const useUIStore = create<UIStoreState>((set) => ({
@@ -39,6 +41,7 @@ export const useUIStore = create<UIStoreState>((set) => ({
   exportDialogOpen: false,
   showOutlines: true,
   ellipseMode: 'full',
+  canvasColor: '#000000',
 
   setViewport: (partial) =>
     set((state) => ({
@@ -58,4 +61,6 @@ export const useUIStore = create<UIStoreState>((set) => ({
     })),
 
   setEllipseMode: (mode) => set({ ellipseMode: mode }),
+
+  setCanvasColor: (c) => set({ canvasColor: c }),
 }));

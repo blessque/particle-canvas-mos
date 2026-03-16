@@ -14,9 +14,10 @@ import { renderHandles } from './HandleRenderer';
 interface CanvasRootProps {
   particlesRef: React.RefObject<Particle[]>;
   renderTick: number;
+  canvasColor: string;
 }
 
-export function CanvasRoot({ particlesRef, renderTick }: CanvasRootProps) {
+export function CanvasRoot({ particlesRef, renderTick, canvasColor }: CanvasRootProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -96,7 +97,7 @@ export function CanvasRoot({ particlesRef, renderTick }: CanvasRootProps) {
     const scale = Math.min(vp.canvasWidth / vp.documentWidth, vp.canvasHeight / vp.documentHeight);
     const offsetX = (vp.canvasWidth - vp.documentWidth * scale) / 2;
     const offsetY = (vp.canvasHeight - vp.documentHeight * scale) / 2;
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = canvasColor;
     ctx.fillRect(offsetX, offsetY, vp.documentWidth * scale, vp.documentHeight * scale);
 
     if (showOutlines) renderScene(ctx, objects, viewport);
@@ -104,7 +105,7 @@ export function CanvasRoot({ particlesRef, renderTick }: CanvasRootProps) {
     renderHandles(ctx, toolState, objects, viewport, ellipseMode);
 
     ctx.restore();
-  }, [renderTick, objects, toolState, viewport, config, particlesRef, showOutlines, ellipseMode]);
+  }, [renderTick, objects, toolState, viewport, config, particlesRef, showOutlines, ellipseMode, canvasColor]);
 
   // Pointer handlers
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {

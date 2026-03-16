@@ -17,6 +17,7 @@ export default function App() {
   const objects = useSceneStore((s) => s.objects);
   const config = useParticleStore((s) => s.config);
   const viewport = useUIStore((s) => s.viewport);
+  const canvasColor = useUIStore((s) => s.canvasColor);
 
   // Recompute particles whenever scene objects or particle config change
   useEffect(() => {
@@ -46,7 +47,7 @@ export default function App() {
 
       {/* Canvas area */}
       <main className="flex-1 overflow-hidden bg-[#111112] p-6">
-        <CanvasRoot particlesRef={particlesRef} renderTick={renderTick} />
+        <CanvasRoot particlesRef={particlesRef} renderTick={renderTick} canvasColor={canvasColor} />
       </main>
     </div>
   );
