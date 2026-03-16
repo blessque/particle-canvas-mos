@@ -130,7 +130,10 @@ function ColorSlot({
           {history.map((c) => (
             <button
               key={c}
-              onClick={() => onChange(c)}
+              onClick={() => {
+                setHistory((h) => h.map((x) => x === c ? color : x));
+                onChange(c);
+              }}
               className="w-3.5 h-3.5 rounded-full border border-white/20 cursor-pointer shrink-0"
               style={{ backgroundColor: c }}
             />
