@@ -5,3 +5,13 @@ dist/
 CLAUDE.md
 claude.md
 .claude/
+
+# Fonts — only commit the 6 files referenced in src/index.css
+# Ignore everything in public/fonts/, then un-ignore the used ones
+public/fonts/*
+!public/fonts/ALSHaussNext-Regular.woff
+!public/fonts/ALSHaussNext-Regular.woff2
+!public/fonts/ALSHaussNext-WideBold.woff
+!public/fonts/ALSHaussNext-WideBold.woff2
+!public/fonts/ALSHaussMono-Regular.woff
+!public/fonts/ALSHaussMono-Regular.woff2
