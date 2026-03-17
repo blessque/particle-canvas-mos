@@ -107,7 +107,8 @@ export function distributeParticles(
     // 5. Compute candidate position with tangential jitter to break parallel-row pattern
     const tangentX = -sample.normal.y;
     const tangentY =  sample.normal.x;
-    const tangentJitter = (rng() * 2 - 1) * d;
+    const jitterScale = sample.jitterScale ?? 1;
+    const tangentJitter = (rng() * 2 - 1) * d * jitterScale;
     const candidate = {
       x: sample.point.x + sample.normal.x * d * sign + tangentX * tangentJitter,
       y: sample.point.y + sample.normal.y * d * sign + tangentY * tangentJitter,

@@ -42,4 +42,10 @@ export interface OutlineSample {
   normal: Point;
   /** 0 = at an open-path endpoint (no particles), 1 = full density. Undefined = closed shape (always 1). */
   taper?: number;
+  /**
+   * Tangential jitter multiplier. 1 = full organic spread (freehand, shapes).
+   * 0 = no lateral drift — use for SVG imports where path legibility must be preserved.
+   * Defaults to 1 when absent.
+   */
+  jitterScale?: number;
 }

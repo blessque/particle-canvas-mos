@@ -226,7 +226,7 @@ function sampleOnePath(path: Path): OutlineSample[] {
     const ny =  dx / len;
     const normal: Point = { x: nx, y: ny };
     const steps = Math.max(1, Math.floor(len / 2));
-    for (let j = 0; j <= steps; j++) {
+    for (let j = 0; j < steps; j++) {
       const t = j / steps;
       samples.push({
         point: { x: seg.from.x + dx * t, y: seg.from.y + dy * t },
@@ -246,9 +246,6 @@ function sampleOnePath(path: Path): OutlineSample[] {
         sampleCorner(seg.to, normal, nextNormal, 2).forEach((s) =>
           samples.push({ ...s, taper: cornerTaper }),
         );
-        sampleCorner(seg.to, { x: -nx, y: -ny }, { x: ndy / nlen, y: -ndx / nlen }, 2).forEach((s) =>
-          samples.push({ ...s, taper: cornerTaper }),
-        );
       }
     }
     arcDist += len;
@@ -260,8 +257,25 @@ function sampleFreehandPath(obj: FreehandObject): OutlineSample[] {
   return sampleOnePath(obj.path);
 }
 
+/**
+ * Reduces OutlineSample density to at most one sample per grid cell.
+ * Eliminates over-sampling in complex SVG regions (zig-zag, tight detail)
+ * so particle density stays uniform regardless of local path complexity.
+ * gridStep matches the arc-length sampling step (2 doc units) — any denser
+ * sampling is wasted since the Poisson disk uses the same minDist.
+ */
+function thinSamples(samples: OutlineSample[], gridStep: number): OutlineSample[] {
+  const grid = new Map<string, OutlineSample>();
+  for (const s of samples) {
+    const key = `${Math.floor(s.point.x / gridStep)},${Math.floor(s.point.y / gridStep)}`;
+    if (!grid.has(key)) grid.set(key, s);
+  }
+  return [...grid.values()];
+}
+
 function sampleSVGPaths(obj: SVGImportObject): OutlineSample[] {
-  return obj.paths.flatMap((path) => sampleOnePath(path));
+  const raw = obj.paths.flatMap((path) => sampleOnePath(path));
+  return thinSamples(raw, 2).map((s) => ({ ...s, jitterScale: 0.5 }));
 }
 
 /**
