@@ -47,3 +47,7 @@ button {
 .font-regular {
   font-family: 'ALSHaussNext', sans-serif;
 }
+
+/* Hide native scrollbar on sidebar containers */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

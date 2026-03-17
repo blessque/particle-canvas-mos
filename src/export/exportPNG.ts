@@ -17,23 +17,28 @@ export async function exportPNG(
   config: ParticleConfig,
   docWidth: number,
   docHeight: number,
+  scale: 1 | 2 = 1,
 ): Promise<void> {
+  const w = docWidth * scale;
+  const h = docHeight * scale;
+
   // OffscreenCanvas with HTMLCanvasElement fallback for older browsers
   let canvas: OffscreenCanvas | HTMLCanvasElement;
   let ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
 
   if (typeof OffscreenCanvas !== 'undefined') {
-    canvas = new OffscreenCanvas(docWidth, docHeight);
+    canvas = new OffscreenCanvas(w, h);
     ctx = canvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
   } else {
     const el = document.createElement('canvas');
-    el.width = docWidth;
-    el.height = docHeight;
+    el.width = w;
+    el.height = h;
     canvas = el;
     ctx = el.getContext('2d') as CanvasRenderingContext2D;
   }
 
-  ctx.clearRect(0, 0, docWidth, docHeight);
+  ctx.clearRect(0, 0, w, h);
+  if (scale !== 1) ctx.scale(scale, scale);
 
   // Parse hex color once
   const hex = config.color.replace('#', '');

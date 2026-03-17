@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useParticleStore } from '@/store/particleStore';
 import { useUIStore } from '@/store/uiStore';
-import type { SpawnDirection, FalloffType } from '@/types/particles';
+import { useSceneStore } from '@/store/sceneStore';
+import { useToolStore } from '@/store/toolStore';
+import { importSVG } from '@/import/svgImporter';
+import type { SpawnDirection, FalloffType, AnimationMode } from '@/types/particles';
 
 function SliderRow({
   label,
@@ -56,7 +59,7 @@ function SelectRow<T extends string>({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
-        className="bg-white/10 text-white/80 text-[15px] rounded px-2 py-1.5 border border-white/10 cursor-pointer"
+        className="bg-white/10 text-white/80 text-[15px] rounded px-2 py-1.5 border border-white/10 cursor-pointer focus:outline-none"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
@@ -78,83 +81,43 @@ const FALLOFF_OPTIONS: { value: FalloffType; label: string }[] = [
   { value: 'exponential', label: 'Экспоненциально' },
 ];
 
-function ColorSlot({
-  label,
-  color,
-  onChange,
-}: {
-  label: string;
-  color: string;
-  onChange: (c: string) => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const colorOnOpenRef = useRef<string>(color);
-  const [history, setHistory] = useState<string[]>([]);
-
-  // Native 'change' fires once when OS picker is closed/committed (not on every drag pixel)
-  useEffect(() => {
-    const input = inputRef.current;
-    if (!input) return;
-    const handleCommit = () => {
-      const prev = colorOnOpenRef.current;
-      if (input.value !== prev) {
-        setHistory((h) => [prev, ...h.filter((x) => x !== prev)].slice(0, 5));
-      }
-    };
-    input.addEventListener('change', handleCommit);
-    return () => input.removeEventListener('change', handleCommit);
-  }, []);
-
-  function handleOpen() {
-    colorOnOpenRef.current = color;
-    inputRef.current?.click();
-  }
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-[13px] text-white/40">{label}</span>
-      <button
-        onClick={handleOpen}
-        className="w-20 h-20 rounded-full border-2 border-white/20 cursor-pointer shrink-0"
-        style={{ backgroundColor: color }}
-      />
-      <input
-        ref={inputRef}
-        type="color"
-        value={color}
-        onChange={(e) => onChange(e.target.value)}
-        className="sr-only"
-      />
-      {history.length > 0 && (
-        <div className="flex gap-1 flex-wrap">
-          {history.map((c) => (
-            <button
-              key={c}
-              onClick={() => {
-                setHistory((h) => h.map((x) => x === c ? color : x));
-                onChange(c);
-              }}
-              className="w-3.5 h-3.5 rounded-full border border-white/20 cursor-pointer shrink-0"
-              style={{ backgroundColor: c }}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+const ANIMATION_OPTIONS: { value: AnimationMode; label: string }[] = [
+  { value: 'none',        label: 'Нет' },
+  { value: 'brownian',    label: 'Броуновское' },
+  { value: 'directional', label: 'Направленное' },
+  { value: 'spread',      label: 'Разлёт' },
+];
 
 export function ParticlePanel() {
   const config = useParticleStore((s) => s.config);
   const updateConfig = useParticleStore((s) => s.updateConfig);
   const randomizeSeed = useParticleStore((s) => s.randomizeSeed);
-  const showOutlines = useUIStore((s) => s.showOutlines);
-  const setShowOutlines = useUIStore((s) => s.setShowOutlines);
-  const canvasColor = useUIStore((s) => s.canvasColor);
-  const setCanvasColor = useUIStore((s) => s.setCanvasColor);
+  const animationConfig = useUIStore((s) => s.animationConfig);
+  const setAnimationConfig = useUIStore((s) => s.setAnimationConfig);
 
   const [baseSize, setBaseSize] = useState(config.minSize);
   const [sizeVariance, setSizeVariance] = useState(0);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleClear() {
+    useSceneStore.getState().clearAll();
+    useToolStore.getState().clearSelection();
+  }
+
+  async function handleSVGImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    const vp = useUIStore.getState().viewport;
+    const obj = importSVG(text, vp.documentWidth, vp.documentHeight);
+    if (obj) {
+      useSceneStore.getState().addObject(obj);
+      useToolStore.getState().setActiveTool('select');
+      useToolStore.getState().selectObjects([obj.id]);
+    }
+    e.target.value = '';
+  }
 
   function applySize(size: number, variance: number) {
     const f = variance / 100;
@@ -167,19 +130,6 @@ export function ParticlePanel() {
   return (
     <div className="flex flex-col gap-3 p-3">
       <p className="text-[13px] text-white/40 uppercase tracking-widest">Частицы</p>
-
-      <div className="flex gap-6 border-b border-white/10 pb-3">
-        <ColorSlot
-          label="Цвет холста"
-          color={canvasColor}
-          onChange={setCanvasColor}
-        />
-        <ColorSlot
-          label="Цвет частиц"
-          color={config.color}
-          onChange={(c) => updateConfig({ color: c })}
-        />
-      </div>
 
       <SliderRow
         label="Количество"
@@ -248,30 +198,44 @@ export function ParticlePanel() {
         onChange={(v) => updateConfig({ falloffType: v })}
       />
 
-      <button
-        onClick={randomizeSeed}
-        className="text-[15px] text-white/50 hover:text-white/80 border border-white/10 hover:border-white/30 rounded px-2 py-2 transition-colors"
-      >
-        Перемешать
-      </button>
+      <SelectRow
+        label="Анимация"
+        value={animationConfig.mode}
+        options={ANIMATION_OPTIONS}
+        onChange={(v) => setAnimationConfig({ mode: v })}
+      />
 
-      <div className="flex items-center justify-between">
-        <span className="text-[15px] text-white/60">Показывать контуры</span>
+      <div className="border-t border-white/10 pt-3 flex flex-col gap-2">
         <button
-          role="switch"
-          aria-checked={showOutlines}
-          onClick={() => setShowOutlines(!showOutlines)}
-          className={[
-            'relative w-9 h-5 rounded-full transition-colors shrink-0 overflow-hidden',
-            showOutlines ? 'bg-white/70' : 'bg-white/20',
-          ].join(' ')}
+          onClick={randomizeSeed}
+          className="w-full flex items-center gap-2 px-2 py-2 rounded text-base text-left text-white/50 hover:bg-white/10 hover:text-white/80 transition-colors"
         >
-          <span className={[
-            'absolute top-[2px] left-0 w-4 h-4 rounded-full bg-white shadow transition-transform',
-            showOutlines ? 'translate-x-[18px]' : 'translate-x-[2px]',
-          ].join(' ')} />
+          <span className="text-lg w-5 text-center">⟳</span>
+          <span className="flex-1">Перемешать</span>
+        </button>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="w-full flex items-center gap-2 px-2 py-2 rounded text-base text-left text-white/50 hover:bg-white/10 hover:text-white/80 transition-colors"
+        >
+          <span className="text-lg w-5 text-center">↑</span>
+          <span className="flex-1">Импорт SVG</span>
+        </button>
+        <button
+          onClick={handleClear}
+          className="w-full flex items-center gap-2 px-2 py-2 rounded text-base text-left text-white/50 hover:bg-white/10 hover:text-white/80 transition-colors"
+        >
+          <span className="text-lg w-5 text-center">⊘</span>
+          <span className="flex-1">Очистить</span>
         </button>
       </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".svg,image/svg+xml"
+        className="hidden"
+        onChange={handleSVGImport}
+      />
     </div>
   );
 }

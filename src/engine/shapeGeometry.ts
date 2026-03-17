@@ -1,11 +1,8 @@
-import type { Point, Path } from '@/types/geometry';
+import type { Point, Path, OutlineSample } from '@/types/geometry';
 import type { SceneObject, EllipseObject, FreehandObject, SVGImportObject } from '@/types/scene';
 import { sub, normalize, perp2D, dot, scale } from './vectorMath';
 
-export interface OutlineSample {
-  point: Point;
-  normal: Point; // outward unit normal in document space
-}
+export type { OutlineSample };
 
 /**
  * Compute evenly spaced star vertices (outer and inner alternating).
@@ -57,8 +54,9 @@ function sampleEdge(p0: Point, p1: Point, center: Point, step: number): OutlineS
  * Fan-fill samples at a corner vertex between two edges.
  * Sweeps the shorter arc from nA to nB, filling the convex exterior gap.
  * Returns empty for concave corners (arc >= 180°) or near-straight edges.
+ * radius: distance from vertex where each fan sample is placed (= edge step).
  */
-function sampleCorner(vertex: Point, nA: Point, nB: Point): OutlineSample[] {
+function sampleCorner(vertex: Point, nA: Point, nB: Point, radius = 4): OutlineSample[] {
   const angleA = Math.atan2(nA.y, nA.x);
   const angleB = Math.atan2(nB.y, nB.x);
   let delta = angleB - angleA;
@@ -66,15 +64,19 @@ function sampleCorner(vertex: Point, nA: Point, nB: Point): OutlineSample[] {
   while (delta > Math.PI) delta -= 2 * Math.PI;
   while (delta < -Math.PI) delta += 2 * Math.PI;
   // Skip near-straight edges and concave (reflex) corners
-  if (Math.abs(delta) < 0.01 || Math.abs(delta) >= Math.PI) return [];
+  if (Math.abs(delta) < 0.01 || Math.abs(delta) >= Math.PI * 0.99) return [];
 
-  const ANGLE_STEP = Math.PI / 16; // ~11.25° per sample
+  const ANGLE_STEP = Math.PI / 24; // ~7.5° per sample
   const n = Math.max(1, Math.round(Math.abs(delta) / ANGLE_STEP));
   const samples: OutlineSample[] = [];
-  for (let i = 1; i < n; i++) {
+  for (let i = 0; i <= n; i++) {  // include arc endpoints to close edge-corner gaps
     const t = i / n;
     const angle = angleA + delta * t;
-    samples.push({ point: vertex, normal: { x: Math.cos(angle), y: Math.sin(angle) } });
+    const normal: Point = { x: Math.cos(angle), y: Math.sin(angle) };
+    samples.push({
+      point: { x: vertex.x + radius * normal.x, y: vertex.y + radius * normal.y },
+      normal,
+    });
   }
   return samples;
 }
@@ -104,7 +106,7 @@ function samplePolygon(vertices: Point[], center: Point, step: number): OutlineS
     const nNext = edgeNormals[(i + 1) % n]!;
     samples.push(...sampleEdge(p0, p1, center, step));
     // Fan-fill the corner at p1 (junction between edge i and edge i+1)
-    samples.push(...sampleCorner(p1, nCurr, nNext));
+    samples.push(...sampleCorner(p1, nCurr, nNext, step));
   }
   return samples;
 }
@@ -184,17 +186,42 @@ function sampleStar(obj: SceneObject & { type: 'star' }): OutlineSample[] {
   return samplePolygon(verts, center, 2);
 }
 
+/** Cubic smoothstep: 0 at edge0, 1 at edge1, smooth in between */
+function smoothstep(edge0: number, edge1: number, x: number): number {
+  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+}
+
 function sampleOnePath(path: Path): OutlineSample[] {
   const samples: OutlineSample[] = [];
   const segs = path.segments.filter((s) => s.type === 'line');
 
+  // Pre-compute per-segment lengths and total length for endpoint taper
+  const segLengths = segs.map((seg) => {
+    if (seg.type !== 'line') return 0;
+    const dx = seg.to.x - seg.from.x;
+    const dy = seg.to.y - seg.from.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  });
+  const totalLength = segLengths.reduce((a, b) => a + b, 0);
+  // Taper zone: up to 20% of path length from each end, capped at 60 doc units
+  const taperLength = !path.closed && totalLength > 0
+    ? Math.min(totalLength * 0.2, 60)
+    : 0;
+
+  const getTaper = (arcPos: number): number =>
+    taperLength > 0
+      ? smoothstep(0, taperLength, Math.min(arcPos, totalLength - arcPos))
+      : 1;
+
+  let arcDist = 0;
   for (let i = 0; i < segs.length; i++) {
     const seg = segs[i]!;
     if (seg.type !== 'line') continue;
     const dx = seg.to.x - seg.from.x;
     const dy = seg.to.y - seg.from.y;
-    const len = Math.sqrt(dx * dx + dy * dy);
-    if (len < 1) continue;
+    const len = segLengths[i] ?? 0;
+    if (len < 0.01) continue;
     const nx = -dy / len;
     const ny =  dx / len;
     const normal: Point = { x: nx, y: ny };
@@ -204,6 +231,7 @@ function sampleOnePath(path: Path): OutlineSample[] {
       samples.push({
         point: { x: seg.from.x + dx * t, y: seg.from.y + dy * t },
         normal,
+        taper: getTaper(arcDist + len * t),
       });
     }
 
@@ -212,12 +240,18 @@ function sampleOnePath(path: Path): OutlineSample[] {
       const ndx = nextSeg.to.x - nextSeg.from.x;
       const ndy = nextSeg.to.y - nextSeg.from.y;
       const nlen = Math.sqrt(ndx * ndx + ndy * ndy);
-      if (nlen >= 1) {
+      if (nlen >= 0.01) {
         const nextNormal: Point = { x: -ndy / nlen, y: ndx / nlen };
-        samples.push(...sampleCorner(seg.to, normal, nextNormal));
-        samples.push(...sampleCorner(seg.to, { x: -nx, y: -ny }, { x: ndy / nlen, y: -ndx / nlen }));
+        const cornerTaper = getTaper(arcDist + len);
+        sampleCorner(seg.to, normal, nextNormal, 2).forEach((s) =>
+          samples.push({ ...s, taper: cornerTaper }),
+        );
+        sampleCorner(seg.to, { x: -nx, y: -ny }, { x: ndy / nlen, y: -ndx / nlen }, 2).forEach((s) =>
+          samples.push({ ...s, taper: cornerTaper }),
+        );
       }
     }
+    arcDist += len;
   }
   return samples;
 }

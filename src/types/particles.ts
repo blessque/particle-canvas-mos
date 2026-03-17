@@ -27,6 +27,30 @@ export interface Particle {
   opacity: number;
 }
 
+export type AnimationMode = 'none' | 'brownian' | 'directional' | 'spread';
+
+/** Per-particle data baked when animation starts */
+export interface AnimatedParticle {
+  baseX: number; baseY: number;
+  baseRadius: number; baseOpacity: number;
+  normalX: number; normalY: number;
+  tangentX: number; tangentY: number;
+  phase: number;
+  phase2: number;
+}
+
+export interface AnimationConfig {
+  mode: AnimationMode;
+  speed: number;
+  amplitude: number;
+}
+
+export const DEFAULT_ANIMATION_CONFIG: AnimationConfig = {
+  mode: 'none',
+  speed: 1.0,
+  amplitude: 15,
+};
+
 /** Default config to use when initializing the store */
 export const DEFAULT_PARTICLE_CONFIG: ParticleConfig = {
   count: 3000,
@@ -35,7 +59,7 @@ export const DEFAULT_PARTICLE_CONFIG: ParticleConfig = {
   color: '#ffffff',
   opacityRandomize: true,
   baseOpacity: 0.8,
-  spawnDirection: 'outside',
+  spawnDirection: 'both',
   falloffType: 'gaussian',
   falloffDistance: 40,
   falloffBias: 0.5,

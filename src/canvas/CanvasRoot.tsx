@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import type { Particle } from '@/types/particles';
+import type { Particle, AnimatedParticle } from '@/types/particles';
 import type { ToolCallbacks } from '@/types/tools';
 import { useSceneStore } from '@/store/sceneStore';
 import { useToolStore } from '@/store/toolStore';
@@ -7,17 +7,19 @@ import { useUIStore } from '@/store/uiStore';
 import { useParticleStore } from '@/store/particleStore';
 import { screenToCanvas, canvasToDocument } from '@/utils/coordinates';
 import { getToolInstance } from '@/tools/toolRegistry';
+import { computeFrame, isSpreadComplete } from '@/engine/animationEngine';
 import { renderScene } from './SceneRenderer';
 import { renderParticles } from './ParticleRenderer';
 import { renderHandles } from './HandleRenderer';
 
 interface CanvasRootProps {
   particlesRef: React.RefObject<Particle[]>;
+  animatedParticlesRef: React.RefObject<AnimatedParticle[]>;
   renderTick: number;
   canvasColor: string;
 }
 
-export function CanvasRoot({ particlesRef, renderTick, canvasColor }: CanvasRootProps) {
+export function CanvasRoot({ particlesRef, animatedParticlesRef, renderTick, canvasColor }: CanvasRootProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -36,6 +38,16 @@ export function CanvasRoot({ particlesRef, renderTick, canvasColor }: CanvasRoot
   const showOutlines = useUIStore((s) => s.showOutlines);
   const ellipseMode = useUIStore((s) => s.ellipseMode);
   const config = useParticleStore((s) => s.config);
+  const animationConfig = useUIStore((s) => s.animationConfig);
+  const animationPlaying = useUIStore((s) => s.animationPlaying);
+  const setAnimationPlaying = useUIStore((s) => s.setAnimationPlaying);
+
+  // Always-fresh ref for draw function (avoids stale closures in rAF)
+  const drawFnRef = useRef<((particles: Particle[]) => void) | null>(null);
+  // Always-fresh ref for animation config (avoids restarting loop on slider change)
+  const animConfigRef = useRef(animationConfig);
+  const rafRef = useRef(0);
+  const startTimeRef = useRef(0);
 
   // Build tool callbacks (stable reference via useCallback)
   const getCallbacks = useCallback((): ToolCallbacks => ({
@@ -80,32 +92,81 @@ export function CanvasRoot({ particlesRef, renderTick, canvasColor }: CanvasRoot
     return () => observer.disconnect();
   }, [setViewport]);
 
-  // Render loop — fires whenever tick, objects, toolState, or viewport changes
+  // Keep drawFnRef always pointing to latest closure (no deps = runs every render)
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || viewport.canvasWidth === 0) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    drawFnRef.current = (particlesToDraw: Particle[]) => {
+      const canvas = canvasRef.current;
+      if (!canvas || viewport.canvasWidth === 0) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
-    const dpr = window.devicePixelRatio || 1;
-    ctx.save();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.scale(dpr, dpr);
+      const dpr = window.devicePixelRatio || 1;
+      ctx.save();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.scale(dpr, dpr);
 
-    // Draw dark document background
-    const vp = viewport;
-    const scale = Math.min(vp.canvasWidth / vp.documentWidth, vp.canvasHeight / vp.documentHeight);
-    const offsetX = (vp.canvasWidth - vp.documentWidth * scale) / 2;
-    const offsetY = (vp.canvasHeight - vp.documentHeight * scale) / 2;
-    ctx.fillStyle = canvasColor;
-    ctx.fillRect(offsetX, offsetY, vp.documentWidth * scale, vp.documentHeight * scale);
+      const vp = viewport;
+      const s = Math.min(vp.canvasWidth / vp.documentWidth, vp.canvasHeight / vp.documentHeight);
+      const offsetX = (vp.canvasWidth - vp.documentWidth * s) / 2;
+      const offsetY = (vp.canvasHeight - vp.documentHeight * s) / 2;
+      ctx.fillStyle = canvasColor;
+      ctx.fillRect(offsetX, offsetY, vp.documentWidth * s, vp.documentHeight * s);
 
-    if (showOutlines) renderScene(ctx, objects, viewport);
-    renderParticles(ctx, particlesRef.current ?? [], config, viewport);
-    renderHandles(ctx, toolState, objects, viewport, ellipseMode);
+      if (showOutlines) renderScene(ctx, objects, viewport);
+      renderParticles(ctx, particlesToDraw, config, viewport);
+      renderHandles(ctx, toolState, objects, viewport, ellipseMode);
 
-    ctx.restore();
-  }, [renderTick, objects, toolState, viewport, config, particlesRef, showOutlines, ellipseMode, canvasColor]);
+      ctx.restore();
+    };
+  }); // intentionally no deps — keeps closure fresh without restarting rAF
+
+  // Keep animConfigRef fresh for rAF loop
+  useEffect(() => { animConfigRef.current = animationConfig; }); // no deps
+
+  // Static render — skip when rAF loop is running
+  useEffect(() => {
+    if (animationPlaying && animationConfig.mode !== 'none') return;
+    drawFnRef.current?.(particlesRef.current ?? []);
+  }, [renderTick, objects, toolState, viewport, config, showOutlines, ellipseMode, canvasColor,
+      animationPlaying, animationConfig.mode]);
+
+  // rAF animation loop
+  useEffect(() => {
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = 0; }
+
+    if (!animationPlaying || animationConfig.mode === 'none') {
+      drawFnRef.current?.(particlesRef.current ?? []);
+      return;
+    }
+
+    startTimeRef.current = performance.now();
+
+    function loop(now: number) {
+      const elapsed = (now - startTimeRef.current) / 1000;
+      const cfg = animConfigRef.current;
+
+      if (cfg.mode !== 'spread' && elapsed > 30) {
+        setAnimationPlaying(false);
+        return;
+      }
+      if (cfg.mode === 'spread' && isSpreadComplete(elapsed)) {
+        setAnimationPlaying(false);
+        drawFnRef.current?.(particlesRef.current ?? []);
+        return;
+      }
+
+      const animated = animatedParticlesRef.current;
+      const displaced = animated?.length
+        ? computeFrame(animated, cfg, elapsed)
+        : (particlesRef.current ?? []);
+
+      drawFnRef.current?.(displaced);
+      rafRef.current = requestAnimationFrame(loop);
+    }
+
+    rafRef.current = requestAnimationFrame(loop);
+    return () => { cancelAnimationFrame(rafRef.current); rafRef.current = 0; };
+  }, [animationPlaying]); // Only animationPlaying triggers start/stop
 
   // Pointer handlers
   const handlePointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -167,6 +228,13 @@ export function CanvasRoot({ particlesRef, renderTick, canvasColor }: CanvasRoot
       const nextTool = hotkeyMap[e.code];
       if (nextTool) {
         useToolStore.getState().setActiveTool(nextTool);
+        return;
+      }
+
+      if (e.code === 'Space' && !inInput) {
+        e.preventDefault();
+        const { animationConfig, animationPlaying, setAnimationPlaying } = useUIStore.getState();
+        if (animationConfig.mode !== 'none') setAnimationPlaying(!animationPlaying);
         return;
       }
 

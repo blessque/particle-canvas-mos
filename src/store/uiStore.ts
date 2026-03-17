@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import type { AnimationConfig } from '@/types/particles';
+import { DEFAULT_ANIMATION_CONFIG } from '@/types/particles';
 
 export interface ViewportState {
   zoom: number;
@@ -18,6 +20,9 @@ interface UIStoreState {
   ellipseMode: 'full' | 'half' | 'quarter';
   canvasColor: string;
 
+  animationConfig: AnimationConfig;
+  animationPlaying: boolean;
+
   setViewport: (partial: Partial<ViewportState>) => void;
   toggleLeftPanel: () => void;
   setExportDialogOpen: (open: boolean) => void;
@@ -25,6 +30,8 @@ interface UIStoreState {
   setDocumentSize: (w: number, h: number) => void;
   setEllipseMode: (mode: 'full' | 'half' | 'quarter') => void;
   setCanvasColor: (c: string) => void;
+  setAnimationConfig: (partial: Partial<AnimationConfig>) => void;
+  setAnimationPlaying: (playing: boolean) => void;
 }
 
 export const useUIStore = create<UIStoreState>((set) => ({
@@ -42,6 +49,8 @@ export const useUIStore = create<UIStoreState>((set) => ({
   showOutlines: true,
   ellipseMode: 'full',
   canvasColor: '#000000',
+  animationConfig: { ...DEFAULT_ANIMATION_CONFIG, mode: 'brownian' as const },
+  animationPlaying: false,
 
   setViewport: (partial) =>
     set((state) => ({
@@ -63,4 +72,9 @@ export const useUIStore = create<UIStoreState>((set) => ({
   setEllipseMode: (mode) => set({ ellipseMode: mode }),
 
   setCanvasColor: (c) => set({ canvasColor: c }),
+
+  setAnimationConfig: (partial) =>
+    set((state) => ({ animationConfig: { ...state.animationConfig, ...partial } })),
+
+  setAnimationPlaying: (playing) => set({ animationPlaying: playing }),
 }));

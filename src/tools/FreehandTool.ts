@@ -96,12 +96,7 @@ export const FreehandTool: Tool = {
     const smoothed = chaikin(rawPoints, 4);
     const obj = buildFreehand(smoothed);
     cbs.addObject(obj);
-    cbs.setToolState({
-      activeTool: 'select',
-      isDrawing: false,
-      pendingPath: null,
-      selectedObjectIds: [obj.id],
-    });
+    cbs.setToolState({ isDrawing: false, pendingPath: null });
     rawPoints = [];
   },
 

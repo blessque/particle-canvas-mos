@@ -1,7 +1,6 @@
 import type { Particle, ParticleConfig } from '@/types/particles';
 import type { SceneObject } from '@/types/scene';
 import { sampleShapeOutline } from './shapeGeometry';
-import { add, scale } from './vectorMath';
 import { computeFalloff } from './falloff';
 
 /** Mulberry32 seeded PRNG — returns a function that yields floats in [0, 1) */
@@ -83,11 +82,16 @@ export function distributeParticles(
     const sample = allSamples[sampleIdx];
     if (!sample) continue;
 
-    // 2. Random offset distance within falloffDistance
-    const d = rng() * config.falloffDistance;
+    // 2. Taper: open-path endpoints fade to zero density + narrower spread
+    const taper = sample.taper ?? 1;
+    if (taper < 1 && rng() > taper) continue;
 
-    // 3. Reject based on falloff probability
-    const prob = computeFalloff(d, config.falloffDistance, config.falloffType);
+    // 3. Random offset distance — spread narrows near open-path endpoints
+    const effectiveFalloff = config.falloffDistance * Math.max(0.01, taper);
+    const d = rng() * effectiveFalloff;
+
+    // 4. Reject based on falloff probability
+    const prob = computeFalloff(d, effectiveFalloff, config.falloffType);
     if (rng() > prob) continue;
 
     // 4. Determine sign (inside = toward center = negative normal, outside = positive)
@@ -100,9 +104,14 @@ export function distributeParticles(
       sign = rng() < 0.5 ? 1 : -1;
     }
 
-    // 5. Compute candidate position
-    const offset = scale(sample.normal, d * sign);
-    const candidate = add(sample.point, offset);
+    // 5. Compute candidate position with tangential jitter to break parallel-row pattern
+    const tangentX = -sample.normal.y;
+    const tangentY =  sample.normal.x;
+    const tangentJitter = (rng() * 2 - 1) * d;
+    const candidate = {
+      x: sample.point.x + sample.normal.x * d * sign + tangentX * tangentJitter,
+      y: sample.point.y + sample.normal.y * d * sign + tangentY * tangentJitter,
+    };
 
     // 6. Poisson disk check
     if (hash.hasTooClose(candidate.x, candidate.y, minDist)) continue;

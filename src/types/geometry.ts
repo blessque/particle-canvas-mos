@@ -35,3 +35,11 @@ export interface Path {
   segments: CurveSegment[];
   closed: boolean;
 }
+
+/** A point on a shape outline with its outward unit normal */
+export interface OutlineSample {
+  point: Point;
+  normal: Point;
+  /** 0 = at an open-path endpoint (no particles), 1 = full density. Undefined = closed shape (always 1). */
+  taper?: number;
+}
