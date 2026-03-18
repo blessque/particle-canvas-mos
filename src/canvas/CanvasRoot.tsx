@@ -30,6 +30,7 @@ export function CanvasRoot({ particlesRef, animatedParticlesRef, renderTick, can
     drawStart: s.drawStart,
     drawCurrent: s.drawCurrent,
     shiftHeld: s.shiftHeld,
+    altHeld: s.altHeld,
     selectedObjectIds: s.selectedObjectIds,
     pendingPath: s.pendingPath,
   }));
@@ -115,6 +116,30 @@ export function CanvasRoot({ particlesRef, animatedParticlesRef, renderTick, can
       if (showOutlines) renderScene(ctx, objects, viewport);
       renderParticles(ctx, particlesToDraw, config, viewport);
       renderHandles(ctx, toolState, objects, viewport, ellipseMode);
+
+      // Snap guide lines
+      const snapLines = getToolInstance(toolState.activeTool).getSnapLines?.() ?? [];
+      if (snapLines.length > 0) {
+        ctx.save();
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        ctx.globalAlpha = 0.8;
+        for (const line of snapLines) {
+          ctx.beginPath();
+          if (line.orientation === 'vertical') {
+            const lx = offsetX + line.pos * s;
+            ctx.moveTo(lx, offsetY);
+            ctx.lineTo(lx, offsetY + vp.documentHeight * s);
+          } else {
+            const ly = offsetY + line.pos * s;
+            ctx.moveTo(offsetX, ly);
+            ctx.lineTo(offsetX + vp.documentWidth * s, ly);
+          }
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
 
       ctx.restore();
     };
@@ -243,6 +268,10 @@ export function CanvasRoot({ particlesRef, animatedParticlesRef, renderTick, can
       if (e.key === 'Shift') {
         useToolStore.getState().setShiftHeld(true);
       }
+      if (e.key === 'Alt') {
+        e.preventDefault();
+        useToolStore.getState().setAltHeld(true);
+      }
 
       // Delegate to active tool
       const tool = getToolInstance(useToolStore.getState().activeTool);
@@ -252,6 +281,9 @@ export function CanvasRoot({ particlesRef, animatedParticlesRef, renderTick, can
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.key === 'Shift') {
         useToolStore.getState().setShiftHeld(false);
+      }
+      if (e.key === 'Alt') {
+        useToolStore.getState().setAltHeld(false);
       }
       const tool = getToolInstance(useToolStore.getState().activeTool);
       tool.onKeyUp?.(e, getCallbacks());

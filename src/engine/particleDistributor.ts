@@ -87,7 +87,10 @@ export function distributeParticles(
     if (taper < 1 && rng() > taper) continue;
 
     // 3. Random offset distance — spread narrows near open-path endpoints
-    const effectiveFalloff = config.falloffDistance * Math.max(0.01, taper);
+    const baseFalloff = config.falloffMode === 'proportional'
+      ? config.falloffDistance * (sample.shapeSize ?? 100) / 100
+      : config.falloffDistance;
+    const effectiveFalloff = baseFalloff * Math.max(0.01, taper);
     const d = rng() * effectiveFalloff;
 
     // 4. Reject based on falloff probability

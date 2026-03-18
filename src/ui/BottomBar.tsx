@@ -1,6 +1,9 @@
 import { useToolStore } from '@/store/toolStore';
 import { useUIStore } from '@/store/uiStore';
+import { useSceneStore } from '@/store/sceneStore';
+import { uid } from '@/utils/uid';
 import type { ToolType } from '@/types/tools';
+import type { RectangleObject, EllipseObject, StarObject } from '@/types/scene';
 
 function PlayIcon() {
   return (
@@ -36,15 +39,15 @@ const ARC_MODES = [
 function ToolButton({
   tool,
   activeTool,
-  setActiveTool,
+  onClick,
 }: {
   tool: typeof TOOLS[number];
   activeTool: ToolType;
-  setActiveTool: (t: ToolType) => void;
+  onClick: () => void;
 }) {
   return (
     <button
-      onClick={() => setActiveTool(tool.type)}
+      onClick={onClick}
       title={tool.label}
       className={[
         'flex flex-col items-center px-2 py-1.5 rounded-xl w-11 transition-colors',
@@ -59,6 +62,8 @@ function ToolButton({
   );
 }
 
+const PLACE_TOOLS = new Set<ToolType>(['rectangle', 'ellipse', 'star']);
+
 export function BottomBar() {
   const activeTool = useToolStore((s) => s.activeTool);
   const setActiveTool = useToolStore((s) => s.setActiveTool);
@@ -68,6 +73,32 @@ export function BottomBar() {
   const setAnimationPlaying = useUIStore((s) => s.setAnimationPlaying);
   const animationConfig = useUIStore((s) => s.animationConfig);
   const setAnimationConfig = useUIStore((s) => s.setAnimationConfig);
+
+  function placeShapeAtCenter(type: 'rectangle' | 'ellipse' | 'star') {
+    const { documentWidth: dw, documentHeight: dh } = useUIStore.getState().viewport;
+    const size = Math.min(dw, dh) * 0.35;
+    const x = dw / 2 - size / 2;
+    const y = dh / 2 - size / 2;
+    const base = { id: uid(), position: { x, y }, width: size, height: size, rotation: 0, visible: true, locked: false };
+    let obj: RectangleObject | EllipseObject | StarObject;
+    if (type === 'rectangle') {
+      obj = { ...base, type: 'rectangle' };
+    } else if (type === 'ellipse') {
+      obj = { ...base, type: 'ellipse', arcStartAngle: 0, arcEndAngle: Math.PI * 2 };
+    } else {
+      obj = { ...base, type: 'star', points: 5, innerRadiusRatio: 0.4 };
+    }
+    useSceneStore.getState().addObject(obj);
+    useToolStore.getState().setActiveTool('select');
+    useToolStore.getState().selectObjects([obj.id]);
+  }
+
+  function getToolClickHandler(type: ToolType): () => void {
+    if (PLACE_TOOLS.has(type)) {
+      return () => placeShapeAtCenter(type as 'rectangle' | 'ellipse' | 'star');
+    }
+    return () => setActiveTool(type);
+  }
 
   return (
     <div className="relative shrink-0 flex items-center px-4 pb-3 pt-2 bg-[#111112]">
@@ -128,10 +159,10 @@ export function BottomBar() {
                   <span className="text-[10px] text-white/25 ml-1 font-mono">⌥O</span>
                 </div>
               )}
-              <ToolButton tool={tool} activeTool={activeTool} setActiveTool={setActiveTool} />
+              <ToolButton tool={tool} activeTool={activeTool} onClick={getToolClickHandler(tool.type)} />
             </div>
           ) : (
-            <ToolButton key={tool.type} tool={tool} activeTool={activeTool} setActiveTool={setActiveTool} />
+            <ToolButton key={tool.type} tool={tool} activeTool={activeTool} onClick={getToolClickHandler(tool.type)} />
           )
         )}
       </div>

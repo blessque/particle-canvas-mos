@@ -283,14 +283,17 @@ function sampleSVGPaths(obj: SVGImportObject): OutlineSample[] {
  * Returns empty array for unsupported types.
  */
 export function sampleShapeOutline(obj: SceneObject): OutlineSample[] {
+  let samples: OutlineSample[];
   switch (obj.type) {
-    case 'rectangle': return sampleRectangle(obj);
-    case 'ellipse':   return sampleEllipse(obj);
-    case 'star':      return sampleStar(obj);
-    case 'freehand':    return sampleFreehandPath(obj);
-    case 'svg-import':  return sampleSVGPaths(obj as SVGImportObject);
+    case 'rectangle': samples = sampleRectangle(obj); break;
+    case 'ellipse':   samples = sampleEllipse(obj); break;
+    case 'star':      samples = sampleStar(obj); break;
+    case 'freehand':    samples = sampleFreehandPath(obj); break;
+    case 'svg-import':  samples = sampleSVGPaths(obj as SVGImportObject); break;
     default:            return [];
   }
+  const shapeSize = Math.min(obj.width, obj.height);
+  return samples.map((s) => ({ ...s, shapeSize }));
 }
 
 /** Compute the axis-aligned bounding box for a scene object */

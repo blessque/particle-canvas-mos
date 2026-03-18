@@ -175,14 +175,36 @@ export function ParticlePanel() {
         onChange={(v) => updateConfig({ falloffBias: v / 100, baseOpacity: 1.0, opacityRandomize: true })}
       />
 
-      <SliderRow
-        label="Рассеивание"
-        value={config.falloffDistance}
-        min={5}
-        max={200}
-        step={5}
-        onChange={(v) => updateConfig({ falloffDistance: v })}
-      />
+      <div className="flex flex-col gap-0.5">
+        <div className="flex justify-between items-center text-[15px] text-white/50">
+          <span>Рассеивание</span>
+          <div className="flex items-center gap-0.5">
+            {(['absolute', 'proportional'] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => updateConfig({ falloffMode: mode })}
+                className={[
+                  'px-1.5 py-0.5 rounded text-[11px] transition-colors',
+                  config.falloffMode === mode
+                    ? 'bg-white/15 text-white'
+                    : 'text-white/30 hover:bg-white/10 hover:text-white/60',
+                ].join(' ')}
+              >
+                {mode === 'absolute' ? 'АБС' : '%'}
+              </button>
+            ))}
+          </div>
+        </div>
+        <input
+          type="range"
+          min={5}
+          max={200}
+          step={5}
+          value={config.falloffDistance}
+          onChange={(e) => updateConfig({ falloffDistance: Number(e.target.value) })}
+          className="w-full accent-white cursor-pointer"
+        />
+      </div>
 
       <SelectRow
         label="Направление"

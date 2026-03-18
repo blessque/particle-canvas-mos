@@ -1,8 +1,10 @@
 import type { Tool, ToolCallbacks } from '@/types/tools';
-import type { Point, Path } from '@/types/geometry';
+import type { Point, Path, SnapLine } from '@/types/geometry';
 import type { SceneObject } from '@/types/scene';
 import { getHandles, applyResize } from '@/utils/handleUtils';
 import type { HandleId } from '@/utils/handleUtils';
+import { computeSnap } from '@/utils/snapUtils';
+import { useUIStore } from '@/store/uiStore';
 
 /** Simple point-in-bounding-box hit test */
 function hitTest(obj: SceneObject, pt: Point): boolean {
@@ -92,6 +94,7 @@ let resizeOrig: { x: number; y: number; w: number; h: number } | null = null;
 let resizeOrigPath: Path | null = null;
 let resizeOrigPaths: Path[] | null = null;
 let hoverCursor = 'default';
+let activeSnapLines: SnapLine[] = [];
 
 export const SelectTool: Tool = {
   name: 'select',
@@ -165,7 +168,7 @@ export const SelectTool: Tool = {
 
     // Resize in progress
     if (resizeHandle && resizeOrig && resizeObjId) {
-      const result = applyResize(resizeHandle, docPoint, resizeOrig, state.shiftHeld);
+      const result = applyResize(resizeHandle, docPoint, resizeOrig, state.shiftHeld, state.altHeld);
       const newBox = { x: result.position.x, y: result.position.y, w: result.width, h: result.height };
       if (resizeOrigPath) {
         cbs.updateObject(resizeObjId, {
@@ -187,21 +190,49 @@ export const SelectTool: Tool = {
     if (state.isDrawing && dragBase) {
       const dx = docPoint.x - dragBase.x;
       const dy = docPoint.y - dragBase.y;
+
+      // Snap single-object drag to canvas key points
+      let snapDx = 0;
+      let snapDy = 0;
+      if (dragObjPositions.length === 1) {
+        const entry = dragObjPositions[0]!;
+        const obj = cbs.getObjects().find((o) => o.id === entry.id);
+        if (obj) {
+          const vp = useUIStore.getState().viewport;
+          const threshold = 14 / cbs.getScale();
+          const snap = computeSnap(
+            { x: entry.ox + dx, y: entry.oy + dy },
+            obj.width, obj.height,
+            vp.documentWidth, vp.documentHeight,
+            threshold,
+          );
+          snapDx = snap.position.x - (entry.ox + dx);
+          snapDy = snap.position.y - (entry.oy + dy);
+          activeSnapLines = snap.snapLines;
+        }
+      } else {
+        activeSnapLines = [];
+      }
+
       for (const entry of dragObjPositions) {
+        const newX = entry.ox + dx + snapDx;
+        const newY = entry.oy + dy + snapDy;
         if (entry.origPath) {
+          const pdx = newX - entry.ox;
+          const pdy = newY - entry.oy;
           cbs.updateObject(entry.id, {
-            position: { x: entry.ox + dx, y: entry.oy + dy },
-            path: translatePath(entry.origPath, dx, dy),
+            position: { x: newX, y: newY },
+            path: translatePath(entry.origPath, pdx, pdy),
           } as unknown as Partial<SceneObject>);
         } else if (entry.origPaths) {
+          const pdx = newX - entry.ox;
+          const pdy = newY - entry.oy;
           cbs.updateObject(entry.id, {
-            position: { x: entry.ox + dx, y: entry.oy + dy },
-            paths: translatePaths(entry.origPaths, dx, dy),
+            position: { x: newX, y: newY },
+            paths: translatePaths(entry.origPaths, pdx, pdy),
           } as unknown as Partial<SceneObject>);
         } else {
-          cbs.updateObject(entry.id, {
-            position: { x: entry.ox + dx, y: entry.oy + dy },
-          });
+          cbs.updateObject(entry.id, { position: { x: newX, y: newY } });
         }
       }
       return;
@@ -247,6 +278,11 @@ export const SelectTool: Tool = {
     resizeOrigPaths = null;
     dragBase = null;
     dragObjPositions = [];
+    activeSnapLines = [];
+  },
+
+  getSnapLines(): SnapLine[] {
+    return activeSnapLines;
   },
 
   onKeyDown(e: KeyboardEvent, cbs: ToolCallbacks): void {

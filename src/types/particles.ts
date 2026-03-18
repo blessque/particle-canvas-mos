@@ -15,6 +15,7 @@ export interface ParticleConfig {
   spawnDirection: SpawnDirection;
   falloffType: FalloffType;
   falloffDistance: number;
+  falloffMode: 'absolute' | 'proportional';
   falloffBias: number;
   seed: number;
 }
@@ -62,6 +63,7 @@ export const DEFAULT_PARTICLE_CONFIG: ParticleConfig = {
   spawnDirection: 'both',
   falloffType: 'gaussian',
   falloffDistance: 40,
+  falloffMode: 'absolute',
   falloffBias: 0.5,
   seed: 42,
 };

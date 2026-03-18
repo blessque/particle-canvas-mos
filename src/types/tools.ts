@@ -1,4 +1,4 @@
-import type { Point } from './geometry';
+import type { Point, SnapLine } from './geometry';
 
 /** Available tool types */
 export type ToolType = 'select' | 'rectangle' | 'ellipse' | 'star' | 'freehand';
@@ -10,6 +10,7 @@ export interface ToolState {
   drawStart: Point | null;
   drawCurrent: Point | null;
   shiftHeld: boolean;
+  altHeld: boolean;
   selectedObjectIds: string[];
   pendingPath: Point[] | null;
 }
@@ -23,6 +24,7 @@ export interface Tool {
   onKeyDown?(e: KeyboardEvent, callbacks: ToolCallbacks): void;
   onKeyUp?(e: KeyboardEvent, callbacks: ToolCallbacks): void;
   getCursor(): string;
+  getSnapLines?(): SnapLine[];
 }
 
 /** Store actions available to tools */

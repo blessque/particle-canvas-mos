@@ -38,14 +38,46 @@ export function getHandles(obj: SceneObject): HandleInfo[] {
  * Compute new { position, width, height } after dragging handleId to docPt.
  * orig is the shape bbox before the resize started.
  * shiftHeld enforces proportional resize (corners only).
+ * altHeld scales from center (Figma-style).
  */
 export function applyResize(
   handleId: HandleId,
   docPt: Point,
   orig: { x: number; y: number; w: number; h: number },
   shiftHeld: boolean,
+  altHeld: boolean,
 ): { position: Point; width: number; height: number } {
   const MIN = 4;
+  const cx = orig.x + orig.w / 2;
+  const cy = orig.y + orig.h / 2;
+
+  if (altHeld) {
+    // Scale from center: half-size is driven by distance from center to cursor
+    switch (handleId) {
+      case 'nw': case 'ne': case 'sw': case 'se': {
+        let halfW = Math.abs(docPt.x - cx);
+        let halfH = Math.abs(docPt.y - cy);
+        if (shiftHeld && orig.h > 0) {
+          const ratio = orig.w / orig.h;
+          if (halfH === 0 || halfW / halfH >= ratio) halfH = halfW / ratio;
+          else halfW = halfH * ratio;
+        }
+        halfW = Math.max(MIN / 2, halfW);
+        halfH = Math.max(MIN / 2, halfH);
+        return { position: { x: cx - halfW, y: cy - halfH }, width: halfW * 2, height: halfH * 2 };
+      }
+      case 'n': case 's': {
+        const halfH = Math.max(MIN / 2, Math.abs(docPt.y - cy));
+        return { position: { x: orig.x, y: cy - halfH }, width: orig.w, height: halfH * 2 };
+      }
+      case 'e': case 'w': {
+        const halfW = Math.max(MIN / 2, Math.abs(docPt.x - cx));
+        return { position: { x: cx - halfW, y: orig.y }, width: halfW * 2, height: orig.h };
+      }
+      default:
+        return { position: { x: orig.x, y: orig.y }, width: orig.w, height: orig.h };
+    }
+  }
 
   switch (handleId) {
     case 'nw':

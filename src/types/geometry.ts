@@ -36,6 +36,13 @@ export interface Path {
   closed: boolean;
 }
 
+/** A snap guide line shown when a shape aligns to a canvas key point */
+export interface SnapLine {
+  orientation: 'horizontal' | 'vertical';
+  /** Position in document units: x for vertical lines, y for horizontal lines */
+  pos: number;
+}
+
 /** A point on a shape outline with its outward unit normal */
 export interface OutlineSample {
   point: Point;
@@ -48,4 +55,6 @@ export interface OutlineSample {
    * Defaults to 1 when absent.
    */
   jitterScale?: number;
+  /** Bounding-box minor dimension of the source shape (min of width, height). Used for proportional falloff. */
+  shapeSize?: number;
 }
