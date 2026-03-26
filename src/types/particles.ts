@@ -40,16 +40,38 @@ export interface AnimatedParticle {
   phase2: number;
 }
 
+export type SpeedPreset = 1 | 2 | 3 | 4;
+export type AmpPreset = 1 | 2 | 3 | 4;
+
+/** Amplitude (doc units) for each of the 4 presets */
+export const AMP_PRESET_VALUES: Record<AmpPreset, number> = {
+  1: 8,
+  2: 20,
+  3: 40,
+  4: 70,
+};
+
+/** Compute loop-perfect speed: N complete cycles in `duration` seconds */
+export function computeLoopSpeed(preset: SpeedPreset, duration: number): number {
+  return (preset * 2 * Math.PI) / duration;
+}
+
 export interface AnimationConfig {
   mode: AnimationMode;
   speed: number;
   amplitude: number;
+  speedPreset: SpeedPreset;
+  ampPreset: AmpPreset;
 }
+
+export const DEFAULT_VIDEO_DURATION = 10;
 
 export const DEFAULT_ANIMATION_CONFIG: AnimationConfig = {
   mode: 'none',
-  speed: 1.0,
-  amplitude: 15,
+  speedPreset: 2,
+  ampPreset: 2,
+  speed: computeLoopSpeed(2, DEFAULT_VIDEO_DURATION),
+  amplitude: AMP_PRESET_VALUES[2],
 };
 
 /** Default config to use when initializing the store */

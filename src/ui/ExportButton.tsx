@@ -4,6 +4,8 @@ import { exportPNG } from '@/export/exportPNG';
 import { exportSVG } from '@/export/exportSVG';
 import { exportVideo } from '@/export/exportVideo';
 import { SPREAD_DURATION } from '@/engine/animationEngine';
+import { useUIStore } from '@/store/uiStore';
+import type { VideoDuration } from '@/store/uiStore';
 
 interface ExportButtonProps {
   getParticles: () => Particle[];
@@ -17,7 +19,6 @@ interface ExportButtonProps {
 
 type Scale = 1 | 2;
 type FPS = 30 | 60;
-type Duration = 5 | 10 | 30;
 
 export function ExportButton({
   getParticles,
@@ -32,10 +33,12 @@ export function ExportButton({
   const [exportingVideo, setExportingVideo] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
 
+  const videoDuration = useUIStore((s) => s.videoDuration);
+  const setVideoDuration = useUIStore((s) => s.setVideoDuration);
+
   const [pngScale, setPngScale] = useState<Scale>(1);
   const [videoScale, setVideoScale] = useState<Scale>(1);
   const [videoFPS, setVideoFPS] = useState<FPS>(30);
-  const [videoDuration, setVideoDuration] = useState<Duration>(10);
 
   const animConfig = getAnimationConfig();
   const hasAnimation = animConfig.mode !== 'none';
@@ -156,7 +159,7 @@ export function ExportButton({
             <div className="flex items-center justify-between text-[13px] text-white/60">
               <span>Длительность</span>
               <div className="flex gap-1">
-                {([5, 10, 30] as Duration[]).map((d) => (
+                {([5, 10, 30] as VideoDuration[]).map((d) => (
                   <button
                     key={d}
                     onClick={() => setVideoDuration(d)}

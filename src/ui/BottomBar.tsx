@@ -4,6 +4,7 @@ import { useSceneStore } from '@/store/sceneStore';
 import { uid } from '@/utils/uid';
 import type { ToolType } from '@/types/tools';
 import type { RectangleObject, EllipseObject, StarObject } from '@/types/scene';
+import type { SpeedPreset, AmpPreset } from '@/types/particles';
 
 function PlayIcon() {
   return (
@@ -62,6 +63,20 @@ function ToolButton({
   );
 }
 
+const SPEED_PRESETS: { value: SpeedPreset; label: string }[] = [
+  { value: 1, label: '1' },
+  { value: 2, label: '2' },
+  { value: 3, label: '3' },
+  { value: 4, label: '4' },
+];
+
+const AMP_PRESETS: { value: AmpPreset; label: string }[] = [
+  { value: 1, label: 'S' },
+  { value: 2, label: 'M' },
+  { value: 3, label: 'L' },
+  { value: 4, label: 'XL' },
+];
+
 const PLACE_TOOLS = new Set<ToolType>(['rectangle', 'ellipse', 'star']);
 
 export function BottomBar() {
@@ -72,7 +87,7 @@ export function BottomBar() {
   const animationPlaying = useUIStore((s) => s.animationPlaying);
   const setAnimationPlaying = useUIStore((s) => s.setAnimationPlaying);
   const animationConfig = useUIStore((s) => s.animationConfig);
-  const setAnimationConfig = useUIStore((s) => s.setAnimationConfig);
+  const setAnimationPresets = useUIStore((s) => s.setAnimationPresets);
 
   function placeShapeAtCenter(type: 'rectangle' | 'ellipse' | 'star') {
     const { documentWidth: dw, documentHeight: dh } = useUIStore.getState().viewport;
@@ -103,7 +118,7 @@ export function BottomBar() {
   return (
     <div className="relative shrink-0 flex items-center px-4 pb-3 pt-2 bg-[#111112]">
       {/* Left island — Playback */}
-      <div className="flex items-center gap-2 bg-white/[0.06] rounded-2xl px-3 py-2 shrink-0">
+      <div className="flex items-center gap-3 bg-white/[0.06] rounded-2xl px-3 py-2 shrink-0">
         <button
           onClick={() => setAnimationPlaying(!animationPlaying)}
           title={animationPlaying ? 'Остановить (Space)' : 'Запустить (Space)'}
@@ -112,26 +127,50 @@ export function BottomBar() {
           {animationPlaying ? <PauseIcon /> : <PlayIcon />}
         </button>
         <span className="text-[10px] text-white/20">Space</span>
-        <input
-          type="range"
-          min={0.1}
-          max={3.0}
-          step={0.1}
-          value={animationConfig.speed}
-          onChange={(e) => setAnimationConfig({ speed: Number(e.target.value) })}
-          className="w-20 accent-white cursor-pointer"
-          title={`Скорость: ${animationConfig.speed.toFixed(1)}`}
-        />
-        <input
-          type="range"
-          min={1}
-          max={100}
-          step={1}
-          value={animationConfig.amplitude}
-          onChange={(e) => setAnimationConfig({ amplitude: Number(e.target.value) })}
-          className="w-20 accent-white cursor-pointer"
-          title={`Амплитуда: ${animationConfig.amplitude}`}
-        />
+
+        {(animationConfig.mode === 'brownian' || animationConfig.mode === 'directional') && (
+          <>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-white/30 w-8">Темп</span>
+              <div className="flex gap-0.5">
+                {SPEED_PRESETS.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => setAnimationPresets(value, animationConfig.ampPreset)}
+                    className={[
+                      'w-7 h-6 rounded text-[11px] transition-colors',
+                      animationConfig.speedPreset === value
+                        ? 'bg-white/20 text-white'
+                        : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70',
+                    ].join(' ')}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-white/30 w-12">Амплит.</span>
+              <div className="flex gap-0.5">
+                {AMP_PRESETS.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => setAnimationPresets(animationConfig.speedPreset, value)}
+                    className={[
+                      'w-7 h-6 rounded text-[11px] transition-colors',
+                      animationConfig.ampPreset === value
+                        ? 'bg-white/20 text-white'
+                        : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70',
+                    ].join(' ')}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Center island — Tools (absolute, horizontally centered) */}

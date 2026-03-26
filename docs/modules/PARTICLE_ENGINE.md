@@ -75,6 +75,27 @@ For `RasterImportObject`, the brightness grid overrides the distribution:
 - Sample the brightness grid at each candidate position using bilinear interpolation
 - Multiply the candidate's acceptance probability by `(1 - brightness)`
 
+## Sample Density Rules — CRITICAL
+
+These rules exist because the particle engine picks candidates **uniformly at random** from `allSamples`. More samples in a region = more early placements there = the Poisson disk fills it before sparse regions are saturated. Density bugs are subtle and only visible with complex geometry.
+
+### Rule 1: Arc-length sampling ≠ spatial uniformity
+`sampleOnePath` samples every **2 arc-length units**. A straight 50-unit stroke → 25 samples. A micro zig-zag with 1-unit teeth covering the same 50-unit area has ~5× the arc length → ~125 samples packed into the same 2D footprint. Result: hot spots at complex regions.
+
+**Fix already in place:** `thinSamples(samples, 2)` in `sampleSVGPaths` collapses to one sample per 2×2 grid cell before the samples reach the distributor. **Do not remove this call.**
+
+### Rule 2: Always thin SVG samples before distribution
+If you add a new importer or a new sampling path for SVG-like geometry, run `thinSamples(raw, 2)` after collecting all path samples. The grid step (2) matches the arc-length step in `sampleOnePath`.
+
+### Rule 3: Do not thin freehand or primitive shapes
+`sampleFreehandPath`, `sampleRectangle`, `sampleEllipse`, `sampleStar` are already geometrically uniform — their arc spacing ≈ spatial spacing. Thinning them would only drop legitimate samples at shared corners.
+
+### Rule 4: `jitterScale` is not a fix for density — it controls lateral spread
+`OutlineSample.jitterScale` multiplies tangential jitter (not radial distance). SVG paths use `0.5` to reduce lateral drift and preserve legibility; it does **not** affect sample density. The density fix is `thinSamples`.
+
+### Rule 5: Loop bound in `sampleOnePath` is `j < steps`, not `j <= steps`
+Using `j <= steps` emits both the start *and* end point of each segment. Adjacent segments share endpoints → duplicate samples at every segment junction → invisible double-weighting. Keep the loop as `j < steps`.
+
 ## Performance Targets
 
 - 3,000 particles, 5 shapes: < 50ms

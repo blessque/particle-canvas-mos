@@ -73,8 +73,6 @@ export function RightPanel() {
   const updateConfig = useParticleStore((s) => s.updateConfig);
   const canvasColor = useUIStore((s) => s.canvasColor);
   const setCanvasColor = useUIStore((s) => s.setCanvasColor);
-  const showOutlines = useUIStore((s) => s.showOutlines);
-  const setShowOutlines = useUIStore((s) => s.setShowOutlines);
 
   return (
     <div className="flex flex-col gap-3 p-3">
@@ -85,24 +83,6 @@ export function RightPanel() {
           color={config.color}
           onChange={(c) => updateConfig({ color: c })}
         />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <span className="text-[15px] text-white/60">Показывать контуры</span>
-        <button
-          role="switch"
-          aria-checked={showOutlines}
-          onClick={() => setShowOutlines(!showOutlines)}
-          className={[
-            'relative w-9 h-5 rounded-full transition-colors shrink-0 overflow-hidden',
-            showOutlines ? 'bg-white/70' : 'bg-white/20',
-          ].join(' ')}
-        >
-          <span className={[
-            'absolute top-[2px] left-0 w-4 h-4 rounded-full bg-white shadow transition-transform',
-            showOutlines ? 'translate-x-[18px]' : 'translate-x-[2px]',
-          ].join(' ')} />
-        </button>
       </div>
 
       <CanvasSizeSelector />

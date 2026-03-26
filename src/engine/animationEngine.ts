@@ -96,8 +96,8 @@ function brownianFrame(animated: AnimatedParticle[], cfg: AnimationConfig, elaps
   const t = elapsed * cfg.speed;
   const amp = cfg.amplitude;
   return animated.map((p) => {
-    const dn = amp * 0.7 * (0.6 * Math.sin(t + p.phase) + 0.4 * Math.sin(2.3 * t + p.phase * 1.37));
-    const dt = amp * 0.3 * (0.6 * Math.sin(t + p.phase2) + 0.4 * Math.sin(2.3 * t + p.phase2 * 1.37));
+    const dn = amp * 0.7 * (0.6 * Math.sin(t + p.phase) + 0.4 * Math.sin(2 * t + p.phase * 1.37));
+    const dt = amp * 0.3 * (0.6 * Math.sin(t + p.phase2) + 0.4 * Math.sin(2 * t + p.phase2 * 1.37));
     return {
       x: p.baseX + dn * p.normalX + dt * p.tangentX,
       y: p.baseY + dn * p.normalY + dt * p.tangentY,
@@ -111,8 +111,8 @@ function directionalFrame(animated: AnimatedParticle[], cfg: AnimationConfig, el
   const t = elapsed * cfg.speed;
   const amp = cfg.amplitude;
   return animated.map((p) => {
-    const flowDisp = amp * Math.sin(0.8 * t + p.phase);
-    const wobble = amp * 0.15 * Math.sin(1.5 * t + p.phase2);
+    const flowDisp = amp * Math.sin(t + p.phase);
+    const wobble = amp * 0.15 * Math.sin(2 * t + p.phase2);
     return {
       x: p.baseX + flowDisp * p.tangentX + wobble * p.normalX,
       y: p.baseY + flowDisp * p.tangentY + wobble * p.normalY,

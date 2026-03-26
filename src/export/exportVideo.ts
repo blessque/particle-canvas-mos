@@ -1,7 +1,6 @@
 import { Muxer, ArrayBufferTarget } from 'mp4-muxer';
 import type { Particle, ParticleConfig, AnimatedParticle, AnimationConfig } from '@/types/particles';
-import { computeFrame } from '@/engine/animationEngine';
-import { SPREAD_DURATION } from '@/engine/animationEngine';
+import { computeFrame, SPREAD_DURATION } from '@/engine/animationEngine';
 
 export interface VideoExportOptions {
   scale: 1 | 2;
@@ -103,9 +102,17 @@ export async function exportVideo(
     framerate: fps,
   });
 
+  // speed = preset × 2π / duration, so the animation completes exactly
+  // `preset` full cycles in `duration` seconds — frame 0 and last frame are identical.
+  // No crossfade needed.
+
   for (let i = 0; i < totalFrames; i++) {
-    const elapsed = i / fps;
+    const elapsed = animationConfig.mode === 'spread'
+      ? (i / fps) % SPREAD_DURATION
+      : i / fps;
+
     const particles = computeFrame(animatedParticles, animationConfig, elapsed);
+
     renderFrame(ctx, particles, particleConfig, options.canvasColor, w, h, scale);
 
     const timestamp = Math.round(i * (1_000_000 / fps));

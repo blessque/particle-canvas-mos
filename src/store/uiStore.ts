@@ -1,6 +1,13 @@
 import { create } from 'zustand';
-import type { AnimationConfig } from '@/types/particles';
-import { DEFAULT_ANIMATION_CONFIG } from '@/types/particles';
+import type { AnimationConfig, SpeedPreset, AmpPreset } from '@/types/particles';
+import {
+  DEFAULT_ANIMATION_CONFIG,
+  DEFAULT_VIDEO_DURATION,
+  AMP_PRESET_VALUES,
+  computeLoopSpeed,
+} from '@/types/particles';
+
+export type VideoDuration = 5 | 10 | 30;
 
 export interface ViewportState {
   zoom: number;
@@ -16,22 +23,23 @@ interface UIStoreState {
   viewport: ViewportState;
   leftPanelOpen: boolean;
   exportDialogOpen: boolean;
-  showOutlines: boolean;
   ellipseMode: 'full' | 'half' | 'quarter';
   canvasColor: string;
 
   animationConfig: AnimationConfig;
   animationPlaying: boolean;
+  videoDuration: VideoDuration;
 
   setViewport: (partial: Partial<ViewportState>) => void;
   toggleLeftPanel: () => void;
   setExportDialogOpen: (open: boolean) => void;
-  setShowOutlines: (v: boolean) => void;
   setDocumentSize: (w: number, h: number) => void;
   setEllipseMode: (mode: 'full' | 'half' | 'quarter') => void;
   setCanvasColor: (c: string) => void;
   setAnimationConfig: (partial: Partial<AnimationConfig>) => void;
   setAnimationPlaying: (playing: boolean) => void;
+  setVideoDuration: (d: VideoDuration) => void;
+  setAnimationPresets: (speedPreset: SpeedPreset, ampPreset: AmpPreset) => void;
 }
 
 export const useUIStore = create<UIStoreState>((set) => ({
@@ -46,11 +54,11 @@ export const useUIStore = create<UIStoreState>((set) => ({
   },
   leftPanelOpen: true,
   exportDialogOpen: false,
-  showOutlines: true,
   ellipseMode: 'full',
   canvasColor: '#000000',
   animationConfig: { ...DEFAULT_ANIMATION_CONFIG, mode: 'brownian' as const },
   animationPlaying: false,
+  videoDuration: DEFAULT_VIDEO_DURATION as VideoDuration,
 
   setViewport: (partial) =>
     set((state) => ({
@@ -61,8 +69,6 @@ export const useUIStore = create<UIStoreState>((set) => ({
     set((state) => ({ leftPanelOpen: !state.leftPanelOpen })),
 
   setExportDialogOpen: (open) => set({ exportDialogOpen: open }),
-
-  setShowOutlines: (v) => set({ showOutlines: v }),
 
   setDocumentSize: (w, h) =>
     set((state) => ({
@@ -77,4 +83,24 @@ export const useUIStore = create<UIStoreState>((set) => ({
     set((state) => ({ animationConfig: { ...state.animationConfig, ...partial } })),
 
   setAnimationPlaying: (playing) => set({ animationPlaying: playing }),
+
+  setVideoDuration: (d) =>
+    set((state) => ({
+      videoDuration: d,
+      animationConfig: {
+        ...state.animationConfig,
+        speed: computeLoopSpeed(state.animationConfig.speedPreset, d),
+      },
+    })),
+
+  setAnimationPresets: (speedPreset, ampPreset) =>
+    set((state) => ({
+      animationConfig: {
+        ...state.animationConfig,
+        speedPreset,
+        ampPreset,
+        speed: computeLoopSpeed(speedPreset, state.videoDuration),
+        amplitude: AMP_PRESET_VALUES[ampPreset],
+      },
+    })),
 }));

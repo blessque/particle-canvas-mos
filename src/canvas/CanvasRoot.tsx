@@ -36,12 +36,10 @@ export function CanvasRoot({ particlesRef, animatedParticlesRef, renderTick, can
   }));
   const viewport = useUIStore((s) => s.viewport);
   const setViewport = useUIStore((s) => s.setViewport);
-  const showOutlines = useUIStore((s) => s.showOutlines);
   const ellipseMode = useUIStore((s) => s.ellipseMode);
   const config = useParticleStore((s) => s.config);
   const animationConfig = useUIStore((s) => s.animationConfig);
   const animationPlaying = useUIStore((s) => s.animationPlaying);
-  const setAnimationPlaying = useUIStore((s) => s.setAnimationPlaying);
 
   // Always-fresh ref for draw function (avoids stale closures in rAF)
   const drawFnRef = useRef<((particles: Particle[]) => void) | null>(null);
@@ -113,7 +111,7 @@ export function CanvasRoot({ particlesRef, animatedParticlesRef, renderTick, can
       ctx.fillStyle = canvasColor;
       ctx.fillRect(offsetX, offsetY, vp.documentWidth * s, vp.documentHeight * s);
 
-      if (showOutlines) renderScene(ctx, objects, viewport);
+      if (toolState.isDrawing) renderScene(ctx, objects, viewport);
       renderParticles(ctx, particlesToDraw, config, viewport);
       renderHandles(ctx, toolState, objects, viewport, ellipseMode);
 
@@ -152,7 +150,7 @@ export function CanvasRoot({ particlesRef, animatedParticlesRef, renderTick, can
   useEffect(() => {
     if (animationPlaying && animationConfig.mode !== 'none') return;
     drawFnRef.current?.(particlesRef.current ?? []);
-  }, [renderTick, objects, toolState, viewport, config, showOutlines, ellipseMode, canvasColor,
+  }, [renderTick, objects, toolState, viewport, config, ellipseMode, canvasColor,
       animationPlaying, animationConfig.mode]);
 
   // rAF animation loop
@@ -167,17 +165,12 @@ export function CanvasRoot({ particlesRef, animatedParticlesRef, renderTick, can
     startTimeRef.current = performance.now();
 
     function loop(now: number) {
-      const elapsed = (now - startTimeRef.current) / 1000;
+      let elapsed = (now - startTimeRef.current) / 1000;
       const cfg = animConfigRef.current;
 
-      if (cfg.mode !== 'spread' && elapsed > 30) {
-        setAnimationPlaying(false);
-        return;
-      }
       if (cfg.mode === 'spread' && isSpreadComplete(elapsed)) {
-        setAnimationPlaying(false);
-        drawFnRef.current?.(particlesRef.current ?? []);
-        return;
+        startTimeRef.current = now;
+        elapsed = 0;
       }
 
       const animated = animatedParticlesRef.current;
