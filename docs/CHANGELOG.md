@@ -9,6 +9,7 @@ Full release notes live in the Claude memory file:
 
 | Date | Iteration | What |
 |------|-----------|------|
+| 2026-03-27 | 13 | Loop-perfect video export: preset-driven speed quantisation, pill UI for Темп/Амплит., crossfade removed |
 | 2026-03-19 | 12 | Click-to-place shapes, proportional spread, alt-resize from center, snap guides |
 | 2026-03-18 | 11 | Fix SVG particle density non-uniformity (thinSamples spatial grid) |
 | 2026-03-18 | 10 | Organic particle distribution — tangential jitter fix ("toothbrush" effect) |
