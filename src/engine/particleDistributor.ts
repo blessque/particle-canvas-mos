@@ -91,11 +91,21 @@ export function distributeParticles(
       ? config.falloffDistance * (sample.shapeSize ?? 100) / 100
       : config.falloffDistance;
     const effectiveFalloff = baseFalloff * Math.max(0.01, taper);
-    const d = rng() * effectiveFalloff;
 
-    // 4. Reject based on falloff probability
-    const prob = computeFalloff(d, effectiveFalloff, config.falloffType);
-    if (rng() > prob) continue;
+    // Only spawn anchors in 'both' spread mode
+    const isAnchor = config.spawnDirection === 'both' && rng() < (config.anchorFraction ?? 0);
+    let d: number;
+    if (isAnchor) {
+      // 1-particle-thick band: d ∈ [0, maxSize], strongly biased toward 0
+      d = rng() * rng() * config.maxSize;
+      // Extra sparsity — keep ~35% of candidates; Poisson alone isn't enough
+      if (rng() > 0.35) continue;
+    } else {
+      d = rng() * effectiveFalloff;
+      // 4. Reject based on falloff probability
+      const prob = computeFalloff(d, effectiveFalloff, config.falloffType);
+      if (rng() > prob) continue;
+    }
 
     // 4. Determine sign (inside = toward center = negative normal, outside = positive)
     let sign: number;
@@ -111,7 +121,9 @@ export function distributeParticles(
     const tangentX = -sample.normal.y;
     const tangentY =  sample.normal.x;
     const jitterScale = sample.jitterScale ?? 1;
-    const tangentJitter = (rng() * 2 - 1) * d * jitterScale;
+    // Corner samples always get full jitter to cover the angular gap at vertices
+    const dirFactor = config.spawnDirection !== 'both' ? 0.35 : 1.0;
+    const tangentJitter = (rng() * 2 - 1) * d * jitterScale * dirFactor;
     const candidate = {
       x: sample.point.x + sample.normal.x * d * sign + tangentX * tangentJitter,
       y: sample.point.y + sample.normal.y * d * sign + tangentY * tangentJitter,
@@ -125,7 +137,12 @@ export function distributeParticles(
     const opacity = 1.0 - config.falloffBias * (1.0 - rng());
     const radius = config.minSize + rng() * (config.maxSize - config.minSize);
 
-    particles.push({ x: candidate.x, y: candidate.y, radius, opacity });
+    particles.push({
+      x: candidate.x, y: candidate.y,
+      radius, opacity,
+      ampFactor: isAnchor ? 0.05 : 1.0,
+      isAnchor: isAnchor || undefined,
+    });
   }
 
   return particles;

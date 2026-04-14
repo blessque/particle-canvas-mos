@@ -88,6 +88,8 @@ export function prepareAnimatedParticles(
       tangentY: nx,
       phase: rng() * Math.PI * 2,
       phase2: rng() * Math.PI * 2,
+      ampFactor: p.ampFactor ?? 1.0,
+      isAnchor: p.isAnchor ?? false,
     };
   });
 }
@@ -96,11 +98,13 @@ function brownianFrame(animated: AnimatedParticle[], cfg: AnimationConfig, elaps
   const t = elapsed * cfg.speed;
   const amp = cfg.amplitude;
   return animated.map((p) => {
+    // Anchors get 0.35× amplitude — visible fluctuation, but still hugs path
+    const af = p.isAnchor ? 0.35 : p.ampFactor;
     const dn = amp * 0.7 * (0.6 * Math.sin(t + p.phase) + 0.4 * Math.sin(2 * t + p.phase * 1.37));
     const dt = amp * 0.3 * (0.6 * Math.sin(t + p.phase2) + 0.4 * Math.sin(2 * t + p.phase2 * 1.37));
     return {
-      x: p.baseX + dn * p.normalX + dt * p.tangentX,
-      y: p.baseY + dn * p.normalY + dt * p.tangentY,
+      x: p.baseX + af * (dn * p.normalX + dt * p.tangentX),
+      y: p.baseY + af * (dn * p.normalY + dt * p.tangentY),
       radius: p.baseRadius,
       opacity: p.baseOpacity,
     };
@@ -111,11 +115,14 @@ function directionalFrame(animated: AnimatedParticle[], cfg: AnimationConfig, el
   const t = elapsed * cfg.speed;
   const amp = cfg.amplitude;
   return animated.map((p) => {
+    // Anchors flow at full tangential speed; wobble stays minimal
+    const flowAf  = p.isAnchor ? 1.0 : p.ampFactor;
+    const wobbleAf = p.isAnchor ? 0.03 : p.ampFactor;
     const flowDisp = amp * Math.sin(t + p.phase);
     const wobble = amp * 0.15 * Math.sin(2 * t + p.phase2);
     return {
-      x: p.baseX + flowDisp * p.tangentX + wobble * p.normalX,
-      y: p.baseY + flowDisp * p.tangentY + wobble * p.normalY,
+      x: p.baseX + flowAf * flowDisp * p.tangentX + wobbleAf * wobble * p.normalX,
+      y: p.baseY + flowAf * flowDisp * p.tangentY + wobbleAf * wobble * p.normalY,
       radius: p.baseRadius,
       opacity: p.baseOpacity,
     };
@@ -128,7 +135,7 @@ function spreadFrame(animated: AnimatedParticle[], cfg: AnimationConfig, elapsed
   const opacityFactor = progress < 0.6 ? 1 : 1 - (progress - 0.6) / 0.4;
   const amp = cfg.amplitude;
   return animated.map((p) => {
-    const particleAmp = amp * (0.8 + 0.2 * Math.sin(p.phase));
+    const particleAmp = amp * (0.8 + 0.2 * Math.sin(p.phase)) * p.ampFactor;
     return {
       x: p.baseX + eased * particleAmp * p.normalX,
       y: p.baseY + eased * particleAmp * p.normalY,

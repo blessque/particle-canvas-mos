@@ -18,6 +18,7 @@ export interface ParticleConfig {
   falloffMode: 'absolute' | 'proportional';
   falloffBias: number;
   seed: number;
+  anchorFraction: number;
 }
 
 /** A single computed particle (output of engine, input to renderer) */
@@ -26,6 +27,9 @@ export interface Particle {
   y: number;
   radius: number;
   opacity: number;
+  /** 0–1 amplitude multiplier for animation. Anchors get 0.05 to stay near path. Default 1. */
+  ampFactor?: number;
+  isAnchor?: boolean;
 }
 
 export type AnimationMode = 'none' | 'brownian' | 'directional' | 'spread';
@@ -38,6 +42,8 @@ export interface AnimatedParticle {
   tangentX: number; tangentY: number;
   phase: number;
   phase2: number;
+  ampFactor: number;
+  isAnchor: boolean;
 }
 
 export type SpeedPreset = 1 | 2 | 3 | 4;
@@ -88,4 +94,5 @@ export const DEFAULT_PARTICLE_CONFIG: ParticleConfig = {
   falloffMode: 'absolute',
   falloffBias: 0.5,
   seed: 42,
+  anchorFraction: 0.4,
 };
