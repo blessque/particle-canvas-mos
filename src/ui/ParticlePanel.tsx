@@ -4,7 +4,7 @@ import { useUIStore } from '@/store/uiStore';
 import { useSceneStore } from '@/store/sceneStore';
 import { useToolStore } from '@/store/toolStore';
 import { importSVG } from '@/import/svgImporter';
-import type { SpawnDirection, FalloffType, AnimationMode } from '@/types/particles';
+import type { SpawnDirection } from '@/types/particles';
 
 function SliderRow({
   label,
@@ -75,18 +75,6 @@ const SPAWN_OPTIONS: { value: SpawnDirection; label: string }[] = [
   { value: 'both',    label: 'Во все стороны' },
 ];
 
-const FALLOFF_OPTIONS: { value: FalloffType; label: string }[] = [
-  { value: 'gaussian',    label: 'Гаусс' },
-  { value: 'linear',      label: 'Линейно' },
-  { value: 'exponential', label: 'Экспоненциально' },
-];
-
-const ANIMATION_OPTIONS: { value: AnimationMode; label: string }[] = [
-  { value: 'none',        label: 'Нет' },
-  { value: 'brownian',    label: 'Броуновское' },
-  { value: 'directional', label: 'Направленное' },
-  { value: 'spread',      label: 'Разлёт' },
-];
 
 export function ParticlePanel() {
   const config = useParticleStore((s) => s.config);
@@ -144,7 +132,7 @@ export function ParticlePanel() {
         label="Размер"
         value={baseSize}
         min={0.5}
-        max={8}
+        max={2.5}
         step={0.5}
         onChange={(v) => {
           setBaseSize(v);
@@ -176,36 +164,14 @@ export function ParticlePanel() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-0.5">
-        <div className="flex justify-between items-center text-[15px] text-white/50">
-          <span>Рассеивание</span>
-          <div className="flex items-center gap-0.5">
-            {(['absolute', 'proportional'] as const).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => updateConfig({ falloffMode: mode })}
-                className={[
-                  'px-1.5 py-0.5 rounded text-[11px] transition-colors',
-                  config.falloffMode === mode
-                    ? 'bg-white/15 text-white'
-                    : 'text-white/30 hover:bg-white/10 hover:text-white/60',
-                ].join(' ')}
-              >
-                {mode === 'absolute' ? 'АБС' : '%'}
-              </button>
-            ))}
-          </div>
-        </div>
-        <input
-          type="range"
-          min={5}
-          max={200}
-          step={5}
-          value={config.falloffDistance}
-          onChange={(e) => updateConfig({ falloffDistance: Number(e.target.value) })}
-          className="w-full accent-white cursor-pointer"
-        />
-      </div>
+      <SliderRow
+        label="Рассеивание"
+        value={config.falloffDistance}
+        min={5}
+        max={500}
+        step={5}
+        onChange={(v) => updateConfig({ falloffDistance: v })}
+      />
 
       <SelectRow
         label="Направление"
@@ -214,19 +180,25 @@ export function ParticlePanel() {
         onChange={(v) => updateConfig({ spawnDirection: v })}
       />
 
-      <SelectRow
-        label="Кривая затухания"
-        value={config.falloffType}
-        options={FALLOFF_OPTIONS}
-        onChange={(v) => updateConfig({ falloffType: v })}
-      />
-
-      <SelectRow
-        label="Анимация"
-        value={animationConfig.mode}
-        options={ANIMATION_OPTIONS}
-        onChange={(v) => setAnimationConfig({ mode: v })}
-      />
+      <div className="flex items-center justify-between">
+        <span className="text-[15px] text-white/50">Анимация</span>
+        <div className="flex items-center gap-0.5">
+          {(['brownian', 'directional'] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setAnimationConfig({ mode: m })}
+              className={[
+                'px-1.5 py-0.5 rounded text-[11px] transition-colors',
+                animationConfig.mode === m
+                  ? 'bg-white/15 text-white'
+                  : 'text-white/30 hover:bg-white/10 hover:text-white/60',
+              ].join(' ')}
+            >
+              {m === 'brownian' ? 'Броуновское' : 'Направленное'}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="border-t border-white/10 pt-3 flex flex-col gap-2">
         <button

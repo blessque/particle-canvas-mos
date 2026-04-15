@@ -13,9 +13,7 @@ export interface ParticleConfig {
   opacityRandomize: boolean;
   baseOpacity: number;
   spawnDirection: SpawnDirection;
-  falloffType: FalloffType;
   falloffDistance: number;
-  falloffMode: 'absolute' | 'proportional';
   falloffBias: number;
   seed: number;
   anchorFraction: number;
@@ -32,7 +30,7 @@ export interface Particle {
   isAnchor?: boolean;
 }
 
-export type AnimationMode = 'none' | 'brownian' | 'directional' | 'spread';
+export type AnimationMode = 'brownian' | 'directional';
 
 /** Per-particle data baked when animation starts */
 export interface AnimatedParticle {
@@ -73,7 +71,7 @@ export interface AnimationConfig {
 export const DEFAULT_VIDEO_DURATION = 10;
 
 export const DEFAULT_ANIMATION_CONFIG: AnimationConfig = {
-  mode: 'none',
+  mode: 'brownian',
   speedPreset: 2,
   ampPreset: 2,
   speed: computeLoopSpeed(2, DEFAULT_VIDEO_DURATION),
@@ -89,9 +87,7 @@ export const DEFAULT_PARTICLE_CONFIG: ParticleConfig = {
   opacityRandomize: true,
   baseOpacity: 0.8,
   spawnDirection: 'both',
-  falloffType: 'gaussian',
   falloffDistance: 40,
-  falloffMode: 'absolute',
   falloffBias: 0.8,
   seed: 42,
   anchorFraction: 0.4,

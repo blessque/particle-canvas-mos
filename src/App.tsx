@@ -21,7 +21,7 @@ export default function App() {
   const config = useParticleStore((s) => s.config);
   const viewport = useUIStore((s) => s.viewport);
   const canvasColor = useUIStore((s) => s.canvasColor);
-  const animationConfig = useUIStore((s) => s.animationConfig);
+
 
   // Recompute particles whenever scene objects or particle config change
   useEffect(() => {
@@ -29,16 +29,15 @@ export default function App() {
     setRenderTick((t) => t + 1);
   }, [objects, config]);
 
-  // Re-prep animated particles whenever particles change or animation mode changes
+  // Re-prep animated particles whenever particles change
   useEffect(() => {
-    if (animationConfig.mode === 'none') { animatedParticlesRef.current = []; return; }
     const allSamples = objects.flatMap(sampleShapeOutline);
     if (!allSamples.length || !particlesRef.current.length) { animatedParticlesRef.current = []; return; }
     animatedParticlesRef.current = prepareAnimatedParticles(
       particlesRef.current, allSamples,
       config.falloffDistance, config.seed + 9999,
     );
-  }, [renderTick, objects, animationConfig.mode, config.falloffDistance, config.seed]);
+  }, [renderTick, objects, config.falloffDistance, config.seed]);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#111112] text-white">

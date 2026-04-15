@@ -1,12 +1,6 @@
 import type { OutlineSample } from '@/types/geometry';
 import type { Particle, AnimatedParticle, AnimationConfig } from '@/types/particles';
 
-export const SPREAD_DURATION = 2.5;
-
-export function isSpreadComplete(elapsed: number): boolean {
-  return elapsed >= SPREAD_DURATION;
-}
-
 /** Seeded pseudo-random number generator (mulberry32) */
 function makePrng(seed: number) {
   let s = seed >>> 0;
@@ -129,22 +123,6 @@ function directionalFrame(animated: AnimatedParticle[], cfg: AnimationConfig, el
   });
 }
 
-function spreadFrame(animated: AnimatedParticle[], cfg: AnimationConfig, elapsed: number): Particle[] {
-  const progress = Math.min(elapsed / SPREAD_DURATION, 1);
-  const eased = 1 - Math.pow(1 - progress, 3);
-  const opacityFactor = progress < 0.6 ? 1 : 1 - (progress - 0.6) / 0.4;
-  const amp = cfg.amplitude;
-  return animated.map((p) => {
-    const particleAmp = amp * (0.8 + 0.2 * Math.sin(p.phase)) * p.ampFactor;
-    return {
-      x: p.baseX + eased * particleAmp * p.normalX,
-      y: p.baseY + eased * particleAmp * p.normalY,
-      radius: p.baseRadius,
-      opacity: p.baseOpacity * opacityFactor,
-    };
-  });
-}
-
 /**
  * Compute displaced particle positions for the current animation frame.
  */
@@ -153,10 +131,6 @@ export function computeFrame(
   cfg: AnimationConfig,
   elapsed: number,
 ): Particle[] {
-  switch (cfg.mode) {
-    case 'brownian':    return brownianFrame(animated, cfg, elapsed);
-    case 'directional': return directionalFrame(animated, cfg, elapsed);
-    case 'spread':      return spreadFrame(animated, cfg, elapsed);
-    default:            return animated.map((p) => ({ x: p.baseX, y: p.baseY, radius: p.baseRadius, opacity: p.baseOpacity }));
-  }
+  if (cfg.mode === 'directional') return directionalFrame(animated, cfg, elapsed);
+  return brownianFrame(animated, cfg, elapsed);
 }

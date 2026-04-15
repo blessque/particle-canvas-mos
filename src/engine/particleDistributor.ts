@@ -87,9 +87,7 @@ export function distributeParticles(
     if (taper < 1 && rng() > taper) continue;
 
     // 3. Random offset distance — spread narrows near open-path endpoints
-    const baseFalloff = config.falloffMode === 'proportional'
-      ? config.falloffDistance * (sample.shapeSize ?? 100) / 100
-      : config.falloffDistance;
+    const baseFalloff = config.falloffDistance;
     const effectiveFalloff = baseFalloff * Math.max(0.01, taper);
 
     // Only spawn anchors in 'both' spread mode
@@ -103,7 +101,7 @@ export function distributeParticles(
     } else {
       d = rng() * effectiveFalloff;
       // 4. Reject based on falloff probability
-      const prob = computeFalloff(d, effectiveFalloff, config.falloffType);
+      const prob = computeFalloff(d, effectiveFalloff, 'gaussian');
       if (rng() > prob) continue;
     }
 

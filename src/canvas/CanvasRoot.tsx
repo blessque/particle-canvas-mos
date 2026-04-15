@@ -7,7 +7,7 @@ import { useUIStore } from '@/store/uiStore';
 import { useParticleStore } from '@/store/particleStore';
 import { screenToCanvas, canvasToDocument } from '@/utils/coordinates';
 import { getToolInstance } from '@/tools/toolRegistry';
-import { computeFrame, isSpreadComplete } from '@/engine/animationEngine';
+import { computeFrame } from '@/engine/animationEngine';
 import { renderScene } from './SceneRenderer';
 import { renderParticles } from './ParticleRenderer';
 import { renderHandles } from './HandleRenderer';
@@ -148,16 +148,16 @@ export function CanvasRoot({ particlesRef, animatedParticlesRef, renderTick, can
 
   // Static render — skip when rAF loop is running
   useEffect(() => {
-    if (animationPlaying && animationConfig.mode !== 'none') return;
+    if (animationPlaying) return;
     drawFnRef.current?.(particlesRef.current ?? []);
   }, [renderTick, objects, toolState, viewport, config, ellipseMode, canvasColor,
-      animationPlaying, animationConfig.mode]);
+      animationPlaying]);
 
   // rAF animation loop
   useEffect(() => {
     if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = 0; }
 
-    if (!animationPlaying || animationConfig.mode === 'none') {
+    if (!animationPlaying) {
       drawFnRef.current?.(particlesRef.current ?? []);
       return;
     }
@@ -165,13 +165,8 @@ export function CanvasRoot({ particlesRef, animatedParticlesRef, renderTick, can
     startTimeRef.current = performance.now();
 
     function loop(now: number) {
-      let elapsed = (now - startTimeRef.current) / 1000;
+      const elapsed = (now - startTimeRef.current) / 1000;
       const cfg = animConfigRef.current;
-
-      if (cfg.mode === 'spread' && isSpreadComplete(elapsed)) {
-        startTimeRef.current = now;
-        elapsed = 0;
-      }
 
       const animated = animatedParticlesRef.current;
       const displaced = animated?.length
@@ -251,8 +246,8 @@ export function CanvasRoot({ particlesRef, animatedParticlesRef, renderTick, can
 
       if (e.code === 'Space' && !inInput) {
         e.preventDefault();
-        const { animationConfig, animationPlaying, setAnimationPlaying } = useUIStore.getState();
-        if (animationConfig.mode !== 'none') setAnimationPlaying(!animationPlaying);
+        const { animationPlaying, setAnimationPlaying } = useUIStore.getState();
+        setAnimationPlaying(!animationPlaying);
         return;
       }
 
