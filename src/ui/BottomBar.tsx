@@ -90,6 +90,13 @@ const ARC_MODES = [
 
 const PLACE_TOOLS = new Set<ToolType>(['rectangle', 'ellipse', 'star']);
 
+function toolButtonRadius(i: number, total: number) {
+  if (total === 1) return 'rounded-[16px]';
+  if (i === 0) return 'rounded-tl-[16px] rounded-bl-[16px] rounded-tr-[2px] rounded-br-[2px]';
+  if (i === total - 1) return 'rounded-tr-[16px] rounded-br-[16px] rounded-tl-[2px] rounded-bl-[2px]';
+  return 'rounded-[2px]';
+}
+
 export function BottomBar() {
   const activeTool = useToolStore((s) => s.activeTool);
   const setActiveTool = useToolStore((s) => s.setActiveTool);
@@ -125,72 +132,75 @@ export function BottomBar() {
   }
 
   return (
-    <div className="relative flex items-center justify-center h-[68px] bg-black px-4 shrink-0">
-      {/* Centered tools pill */}
-      <div className="bg-[#0e0f11] rounded-[22px] px-[6px] py-[8px] flex gap-[2px]">
-        {TOOLS.map((tool) =>
-          tool.type === 'ellipse' ? (
-            <div key="ellipse" className="relative">
-              {activeTool === 'ellipse' && (
-                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 flex items-center gap-[2px] bg-[#0e0f11] rounded-[14px] px-[6px] py-[6px]">
-                  {ARC_MODES.map(({ mode, icon, label }) => (
-                    <button
-                      key={mode}
-                      onClick={() => setEllipseMode(mode)}
-                      title={label}
-                      className={[
-                        'px-2 py-1 rounded-[4px] text-base transition-colors',
-                        ellipseMode === mode
-                          ? 'bg-[#33373f] text-white'
-                          : 'text-[#777e8c] hover:bg-[#1a1d21]',
-                      ].join(' ')}
-                    >
-                      {icon}
-                    </button>
-                  ))}
-                  <span className="text-[10px] text-[#454a55] ml-1 font-mono">⌥O</span>
-                </div>
-              )}
+    <div className="flex items-center justify-center h-[68px] bg-black px-4 shrink-0">
+      <div className="flex items-center gap-2">
+        {/* Centered tools pill */}
+        <div className="bg-[#0e0f11] rounded-[22px] px-[6px] py-[8px] flex gap-[2px]">
+          {TOOLS.map((tool, i) =>
+            tool.type === 'ellipse' ? (
+              <div key="ellipse" className="relative">
+                {activeTool === 'ellipse' && (
+                  <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 flex items-center gap-[2px] bg-[#0e0f11] rounded-[14px] px-[6px] py-[6px]">
+                    {ARC_MODES.map(({ mode, icon, label }) => (
+                      <button
+                        key={mode}
+                        onClick={() => setEllipseMode(mode)}
+                        title={label}
+                        className={[
+                          'px-2 py-1 rounded-[8px] text-base transition-colors',
+                          ellipseMode === mode
+                            ? 'bg-[#33373f] text-white'
+                            : 'text-[#777e8c] hover:bg-[#1a1d21]',
+                        ].join(' ')}
+                      >
+                        {icon}
+                      </button>
+                    ))}
+                    <span className="text-[10px] text-[#454a55] ml-1 font-mono">⌥O</span>
+                  </div>
+                )}
+                <button
+                  onClick={getToolClickHandler(tool.type)}
+                  className={[
+                    'flex flex-col items-center justify-center gap-1 h-[44px] px-2 transition-colors',
+                    toolButtonRadius(i, TOOLS.length),
+                    activeTool === tool.type
+                      ? 'bg-[#33373f] text-white'
+                      : 'text-[#777e8c] hover:bg-[#1a1d21]',
+                  ].join(' ')}
+                >
+                  <tool.Icon />
+                  <span className="font-cond-regular text-[10px] leading-none">{tool.hotkey}</span>
+                </button>
+              </div>
+            ) : (
               <button
+                key={tool.type}
                 onClick={getToolClickHandler(tool.type)}
                 className={[
-                  'flex flex-col items-center justify-center gap-1 h-[44px] px-2 rounded-[4px] transition-colors',
+                  'flex flex-col items-center justify-center gap-1 h-[44px] px-2 transition-colors',
+                  toolButtonRadius(i, TOOLS.length),
                   activeTool === tool.type
                     ? 'bg-[#33373f] text-white'
                     : 'text-[#777e8c] hover:bg-[#1a1d21]',
                 ].join(' ')}
               >
                 <tool.Icon />
-                <span className="font-cond text-[10px] leading-none">{tool.hotkey}</span>
+                <span className="font-cond-regular text-[10px] leading-none">{tool.hotkey}</span>
               </button>
-            </div>
-          ) : (
-            <button
-              key={tool.type}
-              onClick={getToolClickHandler(tool.type)}
-              className={[
-                'flex flex-col items-center justify-center gap-1 h-[44px] px-2 rounded-[4px] transition-colors',
-                activeTool === tool.type
-                  ? 'bg-[#33373f] text-white'
-                  : 'text-[#777e8c] hover:bg-[#1a1d21]',
-              ].join(' ')}
-            >
-              <tool.Icon />
-              <span className="font-cond text-[10px] leading-none">{tool.hotkey}</span>
-            </button>
-          )
-        )}
-      </div>
+            )
+          )}
+        </div>
 
-      {/* Play / Pause — absolute right */}
-      <button
-        onClick={() => setAnimationPlaying(!animationPlaying)}
-        title={animationPlaying ? 'Пауза (Space)' : 'Запустить (Space)'}
-        className="absolute right-4 flex items-center gap-2 px-1 py-2 rounded-[4px] font-cond text-[18px] text-[#777e8c] hover:text-white transition-colors"
-      >
-        {animationPlaying ? <PauseIcon /> : <PlayIcon />}
-        {animationPlaying ? 'Пауза' : 'Запустить'}
-      </button>
+        <button
+          onClick={() => setAnimationPlaying(!animationPlaying)}
+          title={animationPlaying ? 'Пауза (Space)' : 'Запустить (Space)'}
+          className="flex items-center gap-2 px-1 py-2 rounded-[4px] font-cond-regular text-[18px] text-[#777e8c] hover:text-white transition-colors"
+        >
+          {animationPlaying ? <PauseIcon /> : <PlayIcon />}
+          {animationPlaying ? 'Пауза' : 'Запустить'}
+        </button>
+      </div>
     </div>
   );
 }

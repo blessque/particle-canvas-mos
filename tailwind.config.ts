@@ -5,6 +5,8 @@ export default {
     extend: {
       fontFamily: {
         'cond': ['"ALSHaussNextCond"', 'sans-serif'],
+        'cond-regular': ['"ALSHaussNextCond"', 'sans-serif'],
+        'cond-black': ['"ALSHaussNextCond"', 'sans-serif'],
         'mono-book': ['"ALSHaussMonoBook"', 'monospace'],
       },
       colors: {

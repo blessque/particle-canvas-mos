@@ -46,7 +46,7 @@ function ColorSlot({
           className="w-8 h-8 rounded-[5px] shrink-0 border border-white/5"
           style={{ backgroundColor: color }}
         />
-        <span className="font-cond text-[14px] text-white flex-1">{label}</span>
+        <span className="font-cond-regular text-[14px] text-white flex-1">{label}</span>
         <span className="font-mono-book text-[14px] text-white opacity-50 uppercase">{hex}</span>
       </div>
       <input
@@ -83,10 +83,10 @@ export function RightPanel() {
 
   return (
     <div className="bg-[#0e0f11] rounded-[22px] p-3 flex flex-col gap-4">
-      <h2 className="font-cond font-black text-[24px] text-[#252931] uppercase leading-none">Холст</h2>
+      <h2 className="font-cond-black font-black text-[24px] text-[#252931] uppercase leading-none">Холст</h2>
 
       <div className="flex flex-col gap-2">
-        <span className="font-cond font-medium text-[14px] text-[#454a55] uppercase">Цвет</span>
+        <span className="font-cond-regular text-[14px] text-[#454a55] uppercase">Цвет</span>
         <ColorSlot label="Холст" color={canvasColor} onChange={setCanvasColor} />
         <ColorSlot
           label="Частицы"
@@ -96,7 +96,7 @@ export function RightPanel() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="font-cond font-medium text-[14px] text-[#454a55] uppercase">Формат</span>
+        <span className="font-cond-regular text-[14px] text-[#454a55] uppercase">Формат</span>
         <CanvasSizeSelector />
       </div>
     </div>

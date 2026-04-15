@@ -32,7 +32,7 @@ function Switcher<T extends string | number>({
     const last = options.length - 1;
     if (options.length === 1) return 'rounded-[8px]';
     if (i === 0) return 'rounded-tl-[8px] rounded-bl-[8px] rounded-tr-[2px] rounded-br-[2px]';
-    if (i === last) return 'rounded-bl-[8px] rounded-br-[8px] rounded-tl-[2px] rounded-tr-[2px]';
+    if (i === last) return 'rounded-tr-[8px] rounded-br-[8px] rounded-tl-[2px] rounded-bl-[2px]';
     return 'rounded-[2px]';
   }
 
@@ -43,7 +43,7 @@ function Switcher<T extends string | number>({
           key={String(opt.value)}
           onClick={() => onChange(opt.value)}
           className={[
-            'font-cond text-[14px] leading-none p-[6px] flex-1 transition-colors',
+            'font-cond-regular text-[14px] leading-none p-[6px] flex-1 transition-colors',
             radius(i),
             value === opt.value
               ? 'bg-[#33373f] text-white'
@@ -60,7 +60,7 @@ function Switcher<T extends string | number>({
 function InlineRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="font-cond font-medium text-[14px] text-[#454a55] uppercase flex-1">{label}</span>
+      <span className="font-cond-regular text-[14px] text-[#454a55] uppercase flex-1">{label}</span>
       {children}
     </div>
   );
@@ -129,7 +129,7 @@ export function ExportButton({
     <>
       {/* Картинка card */}
       <div className="bg-[#0e0f11] rounded-[22px] p-3 flex flex-col gap-4">
-        <h2 className="font-cond font-black text-[24px] text-[#252931] uppercase leading-none">Картинка</h2>
+        <h2 className="font-cond-black font-black text-[24px] text-[#252931] uppercase leading-none">Картинка</h2>
 
         <InlineRow label="Масштаб PNG">
           <Switcher<Scale>
@@ -139,25 +139,27 @@ export function ExportButton({
           />
         </InlineRow>
 
-        <button
-          onClick={handlePNG}
-          disabled={exportingPNG}
-          className="bg-white text-[#0e0f11] rounded-[8px] h-[44px] w-full font-cond text-[18px] hover:opacity-90 disabled:opacity-40 transition-opacity"
-        >
-          {exportingPNG ? 'Экспорт...' : 'Скачать PNG'}
-        </button>
+        <div className="flex flex-col gap-[6px]">
+          <button
+            onClick={handlePNG}
+            disabled={exportingPNG}
+            className="bg-white text-[#0e0f11] rounded-[8px] h-[44px] w-full font-cond-regular text-[18px] hover:opacity-90 disabled:opacity-40 transition-opacity"
+          >
+            {exportingPNG ? 'Экспорт...' : 'Скачать PNG'}
+          </button>
 
-        <button
-          onClick={handleSVG}
-          className="bg-[#202226] text-white rounded-[8px] h-[44px] w-full font-cond text-[18px] hover:opacity-90 transition-opacity"
-        >
-          Скачать SVG
-        </button>
+          <button
+            onClick={handleSVG}
+            className="bg-[#202226] text-white rounded-[8px] h-[44px] w-full font-cond-regular text-[18px] hover:opacity-90 transition-opacity"
+          >
+            Скачать SVG
+          </button>
+        </div>
       </div>
 
       {/* Видео card */}
       <div className="bg-[#0e0f11] rounded-[22px] p-3 flex flex-col gap-4">
-        <h2 className="font-cond font-black text-[24px] text-[#252931] uppercase leading-none">Видео</h2>
+        <h2 className="font-cond-black font-black text-[24px] text-[#252931] uppercase leading-none">Видео</h2>
 
         <InlineRow label="Масштаб MP4">
           <Switcher<Scale>
@@ -176,7 +178,7 @@ export function ExportButton({
         </InlineRow>
 
         <div className="flex flex-col gap-2">
-          <span className="font-cond font-medium text-[14px] text-[#454a55] uppercase">Длительность</span>
+          <span className="font-cond-regular text-[14px] text-[#454a55] uppercase">Длительность</span>
           <Switcher<VideoDuration>
             value={videoDuration}
             options={[
@@ -191,7 +193,7 @@ export function ExportButton({
         <button
           onClick={handleVideo}
           disabled={exportingVideo}
-          className="bg-[#202226] text-white rounded-[8px] h-[44px] w-full font-cond text-[18px] hover:opacity-90 disabled:opacity-40 transition-opacity"
+          className="bg-[#202226] text-white rounded-[8px] h-[44px] w-full font-cond-regular text-[18px] hover:opacity-90 disabled:opacity-40 transition-opacity"
         >
           {exportingVideo
             ? `Экспорт ${Math.round(videoProgress * 100)}%`

@@ -30,7 +30,7 @@ function SliderRow({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex justify-between items-baseline px-0.5">
-        <span className="font-cond font-medium text-[14px] text-[#454a55] uppercase leading-none">
+        <span className="font-cond-regular text-[14px] text-[#454a55] uppercase leading-none">
           {label}
         </span>
         <span className="font-mono text-[14px] text-white leading-none">
@@ -64,7 +64,7 @@ function Switcher<T extends string | number>({
   function radius(i: number) {
     if (i === 0 && n === 1) return 'rounded-[8px]';
     if (i === 0) return 'rounded-tl-[8px] rounded-bl-[8px] rounded-tr-[2px] rounded-br-[2px]';
-    if (i === n - 1) return 'rounded-bl-[8px] rounded-br-[8px] rounded-tl-[2px] rounded-tr-[2px]';
+    if (i === n - 1) return 'rounded-tr-[8px] rounded-br-[8px] rounded-tl-[2px] rounded-bl-[2px]';
     return 'rounded-[2px]';
   }
   return (
@@ -74,7 +74,7 @@ function Switcher<T extends string | number>({
           key={String(opt.value)}
           onClick={() => onChange(opt.value)}
           className={[
-            'flex-1 p-[6px] font-cond text-[14px] leading-none text-center transition-colors',
+            'flex-1 p-[6px] font-cond-regular text-[14px] leading-none text-center transition-colors',
             radius(i),
             value === opt.value
               ? 'bg-[#33373f] text-white'
@@ -91,7 +91,7 @@ function Switcher<T extends string | number>({
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="font-cond font-medium text-[14px] text-[#454a55] uppercase leading-none px-0.5">
+      <span className="font-cond-regular text-[14px] text-[#454a55] uppercase leading-none px-0.5">
         {label}
       </span>
       {children}
@@ -128,7 +128,7 @@ function CustomDropdown<T extends string>({
         onClick={() => setOpen(!open)}
         className="w-full bg-[#33373f] rounded-[8px] px-[10px] py-[10px] flex items-center hover:bg-[#3d4149] transition-colors"
       >
-        <span className="font-cond text-[14px] text-white flex-1 text-left leading-none">
+        <span className="font-cond-regular text-[14px] text-white flex-1 text-left leading-none">
           {selected?.label}
         </span>
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-[#777e8c] shrink-0">
@@ -142,7 +142,7 @@ function CustomDropdown<T extends string>({
               key={opt.value}
               onClick={() => { onChange(opt.value); setOpen(false); }}
               className={[
-                'w-full px-[10px] py-[10px] text-left font-cond text-[14px] leading-none transition-colors',
+                'w-full px-[10px] py-[10px] text-left font-cond-regular text-[14px] leading-none transition-colors',
                 value === opt.value
                   ? 'text-white bg-[#3d4149]'
                   : 'text-[#777e8c] hover:bg-[#3d4149] hover:text-white',
@@ -254,12 +254,18 @@ export function ParticlePanel() {
 
   return (
     <>
-      {/* Logo */}
-      <img src="/logo.svg" alt="Particle Canvas" className="h-7 w-auto px-1 mb-1 shrink-0" />
+      {/* Logo block */}
+      <div className="px-3 py-1">
+        <img
+          src="/icons/BM%E2%80%94logo_main.svg"
+          alt="Particle Canvas"
+          className="h-7 w-auto shrink-0"
+        />
+      </div>
 
       {/* Card: Частицы */}
       <div className="bg-[#0e0f11] rounded-[22px] p-3 flex flex-col gap-4">
-        <h2 className="font-cond font-black text-[24px] text-[#252931] uppercase leading-none">
+        <h2 className="font-cond-black font-black text-[24px] text-[#252931] uppercase leading-none">
           Частицы
         </h2>
 
@@ -321,21 +327,21 @@ export function ParticlePanel() {
         <div className="flex flex-col gap-0.5 border-t border-[#1a1d21] pt-2">
           <button
             onClick={randomizeSeed}
-            className="flex items-center gap-2 px-1 py-2 rounded-[4px] font-cond text-[18px] text-[#777e8c] hover:text-white transition-colors"
+            className="flex items-center gap-2 px-1 py-2 rounded-[4px] font-cond-regular text-[18px] text-[#777e8c] hover:text-white transition-colors"
           >
             <span className="w-6 h-6 flex items-center justify-center shrink-0"><IconRefresh /></span>
             Перемешать
           </button>
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-1 py-2 rounded-[4px] font-cond text-[18px] text-[#777e8c] hover:text-white transition-colors"
+            className="flex items-center gap-2 px-1 py-2 rounded-[4px] font-cond-regular text-[18px] text-[#777e8c] hover:text-white transition-colors"
           >
             <span className="w-6 h-6 flex items-center justify-center shrink-0"><IconUpload /></span>
             Импорт SVG
           </button>
           <button
             onClick={handleClear}
-            className="flex items-center gap-2 px-1 py-2 rounded-[4px] font-cond text-[18px] text-[#777e8c] hover:text-white transition-colors"
+            className="flex items-center gap-2 px-1 py-2 rounded-[4px] font-cond-regular text-[18px] text-[#777e8c] hover:text-white transition-colors"
           >
             <span className="w-6 h-6 flex items-center justify-center shrink-0"><IconTrash /></span>
             Очистить
@@ -345,7 +351,7 @@ export function ParticlePanel() {
 
       {/* Card: Анимация */}
       <div className="bg-[#0e0f11] rounded-[22px] p-3 flex flex-col gap-4">
-        <h2 className="font-cond font-black text-[24px] text-[#252931] uppercase leading-none">
+        <h2 className="font-cond-black font-black text-[24px] text-[#252931] uppercase leading-none">
           Анимация
         </h2>
 

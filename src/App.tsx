@@ -40,17 +40,17 @@ export default function App() {
   }, [renderTick, objects, config.falloffDistance, config.seed]);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-black text-white">
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+    <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-black text-white">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* Left sidebar */}
         <aside className="w-60 shrink-0 overflow-y-auto no-scrollbar">
-          <div className="flex flex-col gap-2 px-2 py-3">
+          <div className="flex flex-col gap-2 px-2 pb-[80px] pt-3">
             <ParticlePanel />
           </div>
         </aside>
 
-        {/* Canvas area */}
-        <main className="flex-1 overflow-hidden bg-black p-6">
+        {/* Canvas area — extra bottom padding matches former non-overlay layout (bar height) */}
+        <main className="flex-1 overflow-hidden bg-black p-6 pb-[calc(1.5rem+68px)]">
           <CanvasRoot
             particlesRef={particlesRef}
             animatedParticlesRef={animatedParticlesRef}
@@ -61,7 +61,7 @@ export default function App() {
 
         {/* Right panel */}
         <aside className="w-60 shrink-0 overflow-y-auto no-scrollbar">
-          <div className="flex flex-col gap-2 px-2 py-3">
+          <div className="flex flex-col gap-2 px-2 pb-[80px] pt-3">
             <RightPanel />
             <ExportButton
               getParticles={() => particlesRef.current}
@@ -76,8 +76,12 @@ export default function App() {
         </aside>
       </div>
 
-      {/* Bottom bar */}
-      <BottomBar />
+      {/* Bottom bar — floats above content; does not shrink the scroll region */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center">
+        <div className="pointer-events-auto w-full">
+          <BottomBar />
+        </div>
+      </div>
     </div>
   );
 }
