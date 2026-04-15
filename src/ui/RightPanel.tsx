@@ -34,14 +34,21 @@ function ColorSlot({
     inputRef.current?.click();
   }
 
+  const hex = color.replace('#', '').toUpperCase();
+
   return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-[13px] text-white/40">{label}</span>
-      <button
+    <div className="flex flex-col gap-[6px]">
+      <div
+        className="bg-[#33373f] rounded-[8px] pl-[3px] pr-[6px] py-[3px] flex items-center gap-2 cursor-pointer"
         onClick={handleOpen}
-        className="w-20 h-20 rounded-full border-2 border-white/20 cursor-pointer shrink-0"
-        style={{ backgroundColor: color }}
-      />
+      >
+        <div
+          className="w-8 h-8 rounded-[5px] shrink-0 border border-white/5"
+          style={{ backgroundColor: color }}
+        />
+        <span className="font-cond text-[14px] text-white flex-1">{label}</span>
+        <span className="font-mono-book text-[14px] text-white opacity-50 uppercase">{hex}</span>
+      </div>
       <input
         ref={inputRef}
         type="color"
@@ -50,7 +57,7 @@ function ColorSlot({
         className="sr-only"
       />
       {history.length > 0 && (
-        <div className="flex gap-1 flex-wrap">
+        <div className="flex gap-[2px] flex-wrap">
           {history.map((c) => (
             <button
               key={c}
@@ -58,7 +65,7 @@ function ColorSlot({
                 setHistory((h) => h.map((x) => x === c ? color : x));
                 onChange(c);
               }}
-              className="w-3.5 h-3.5 rounded-full border border-white/20 cursor-pointer shrink-0"
+              className="w-4 h-4 rounded-[5px] border border-white/10 cursor-pointer shrink-0 hover:opacity-80 transition-opacity"
               style={{ backgroundColor: c }}
             />
           ))}
@@ -75,17 +82,23 @@ export function RightPanel() {
   const setCanvasColor = useUIStore((s) => s.setCanvasColor);
 
   return (
-    <div className="flex flex-col gap-3 p-3">
-      <div className="flex gap-6 pb-3 border-b border-white/10">
-        <ColorSlot label="Цвет холста" color={canvasColor} onChange={setCanvasColor} />
+    <div className="bg-[#0e0f11] rounded-[22px] p-3 flex flex-col gap-4">
+      <h2 className="font-cond font-black text-[24px] text-[#252931] uppercase leading-none">Холст</h2>
+
+      <div className="flex flex-col gap-2">
+        <span className="font-cond font-medium text-[14px] text-[#454a55] uppercase">Цвет</span>
+        <ColorSlot label="Холст" color={canvasColor} onChange={setCanvasColor} />
         <ColorSlot
-          label="Цвет частиц"
+          label="Частицы"
           color={config.color}
           onChange={(c) => updateConfig({ color: c })}
         />
       </div>
 
-      <CanvasSizeSelector />
+      <div className="flex flex-col gap-2">
+        <span className="font-cond font-medium text-[14px] text-[#454a55] uppercase">Формат</span>
+        <CanvasSizeSelector />
+      </div>
     </div>
   );
 }

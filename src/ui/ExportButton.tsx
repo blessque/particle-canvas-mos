@@ -19,6 +19,53 @@ interface ExportButtonProps {
 type Scale = 1 | 2;
 type FPS = 30 | 60;
 
+function Switcher<T extends string | number>({
+  value,
+  options,
+  onChange,
+}: {
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (v: T) => void;
+}) {
+  function radius(i: number) {
+    const last = options.length - 1;
+    if (options.length === 1) return 'rounded-[8px]';
+    if (i === 0) return 'rounded-tl-[8px] rounded-bl-[8px] rounded-tr-[2px] rounded-br-[2px]';
+    if (i === last) return 'rounded-bl-[8px] rounded-br-[8px] rounded-tl-[2px] rounded-tr-[2px]';
+    return 'rounded-[2px]';
+  }
+
+  return (
+    <div className="flex gap-[2px]">
+      {options.map((opt, i) => (
+        <button
+          key={String(opt.value)}
+          onClick={() => onChange(opt.value)}
+          className={[
+            'font-cond text-[14px] leading-none p-[6px] flex-1 transition-colors',
+            radius(i),
+            value === opt.value
+              ? 'bg-[#33373f] text-white'
+              : 'bg-[#202226] text-[#777e8c] hover:bg-[#2a2e35] hover:text-[#9ca3b1]',
+          ].join(' ')}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function InlineRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="font-cond font-medium text-[14px] text-[#454a55] uppercase flex-1">{label}</span>
+      {children}
+    </div>
+  );
+}
+
 export function ExportButton({
   getParticles,
   getAnimatedParticles,
@@ -38,7 +85,6 @@ export function ExportButton({
   const [pngScale, setPngScale] = useState<Scale>(1);
   const [videoScale, setVideoScale] = useState<Scale>(1);
   const [videoFPS, setVideoFPS] = useState<FPS>(30);
-
 
   async function handlePNG() {
     if (exportingPNG) return;
@@ -79,100 +125,73 @@ export function ExportButton({
     }
   }
 
-  function ScaleToggle({ value, onChange }: { value: Scale; onChange: (v: Scale) => void }) {
-    return (
-      <div className="flex gap-1">
-        {([1, 2] as Scale[]).map((s) => (
-          <button
-            key={s}
-            onClick={() => onChange(s)}
-            className={`text-xs px-2 py-1 rounded transition-colors ${
-              value === s
-                ? 'bg-white/20 text-white'
-                : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70'
-            }`}
-          >
-            {s}×
-          </button>
-        ))}
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col gap-3 p-3 border-t border-white/10">
-      {/* PNG section */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <p className="text-[11px] text-white/40 uppercase tracking-widest">PNG</p>
-          <ScaleToggle value={pngScale} onChange={setPngScale} />
-        </div>
+    <>
+      {/* Картинка card */}
+      <div className="bg-[#0e0f11] rounded-[22px] p-3 flex flex-col gap-4">
+        <h2 className="font-cond font-black text-[24px] text-[#252931] uppercase leading-none">Картинка</h2>
+
+        <InlineRow label="Масштаб PNG">
+          <Switcher<Scale>
+            value={pngScale}
+            options={[{ value: 1, label: '1×' }, { value: 2, label: '2×' }]}
+            onChange={setPngScale}
+          />
+        </InlineRow>
+
         <button
           onClick={handlePNG}
           disabled={exportingPNG}
-          className="w-full text-base bg-white hover:bg-white/90 disabled:opacity-40 text-black font-medium rounded px-3 py-2.5 transition-colors"
+          className="bg-white text-[#0e0f11] rounded-[8px] h-[44px] w-full font-cond text-[18px] hover:opacity-90 disabled:opacity-40 transition-opacity"
         >
           {exportingPNG ? 'Экспорт...' : 'Скачать PNG'}
         </button>
+
         <button
           onClick={handleSVG}
-          className="w-full text-base bg-white/10 hover:bg-white/20 text-white/80 rounded px-3 py-2.5 transition-colors"
+          className="bg-[#202226] text-white rounded-[8px] h-[44px] w-full font-cond text-[18px] hover:opacity-90 transition-opacity"
         >
           Скачать SVG
         </button>
       </div>
 
-      {/* Video section */}
-      <div className="flex flex-col gap-2">
-        <p className="text-[11px] text-white/40 uppercase tracking-widest">Видео</p>
+      {/* Видео card */}
+      <div className="bg-[#0e0f11] rounded-[22px] p-3 flex flex-col gap-4">
+        <h2 className="font-cond font-black text-[24px] text-[#252931] uppercase leading-none">Видео</h2>
 
-        <div className="flex items-center justify-between text-[13px] text-white/60">
-          <span>Масштаб</span>
-          <ScaleToggle value={videoScale} onChange={setVideoScale} />
-        </div>
+        <InlineRow label="Масштаб MP4">
+          <Switcher<Scale>
+            value={videoScale}
+            options={[{ value: 1, label: '1×' }, { value: 2, label: '2×' }]}
+            onChange={setVideoScale}
+          />
+        </InlineRow>
 
-        <div className="flex items-center justify-between text-[13px] text-white/60">
-          <span>Кадров/с</span>
-          <div className="flex gap-1">
-            {([30, 60] as FPS[]).map((f) => (
-              <button
-                key={f}
-                onClick={() => setVideoFPS(f)}
-                className={`text-xs px-2 py-1 rounded transition-colors ${
-                  videoFPS === f
-                    ? 'bg-white/20 text-white'
-                    : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70'
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-        </div>
+        <InlineRow label="Кадров / с">
+          <Switcher<FPS>
+            value={videoFPS}
+            options={[{ value: 30, label: '30' }, { value: 60, label: '60' }]}
+            onChange={setVideoFPS}
+          />
+        </InlineRow>
 
-        <div className="flex items-center justify-between text-[13px] text-white/60">
-          <span>Длительность</span>
-          <div className="flex gap-1">
-            {([5, 10, 30] as VideoDuration[]).map((d) => (
-              <button
-                key={d}
-                onClick={() => setVideoDuration(d)}
-                className={`text-xs px-2 py-1 rounded transition-colors ${
-                  videoDuration === d
-                    ? 'bg-white/20 text-white'
-                    : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70'
-                }`}
-              >
-                {d}с
-              </button>
-            ))}
-          </div>
+        <div className="flex flex-col gap-2">
+          <span className="font-cond font-medium text-[14px] text-[#454a55] uppercase">Длительность</span>
+          <Switcher<VideoDuration>
+            value={videoDuration}
+            options={[
+              { value: 5, label: '5с' },
+              { value: 10, label: '10с' },
+              { value: 30, label: '30с' },
+            ]}
+            onChange={setVideoDuration}
+          />
         </div>
 
         <button
           onClick={handleVideo}
           disabled={exportingVideo}
-          className="w-full text-base bg-white/10 hover:bg-white/20 disabled:opacity-40 text-white/80 rounded px-3 py-2.5 transition-colors"
+          className="bg-[#202226] text-white rounded-[8px] h-[44px] w-full font-cond text-[18px] hover:opacity-90 disabled:opacity-40 transition-opacity"
         >
           {exportingVideo
             ? `Экспорт ${Math.round(videoProgress * 100)}%`
@@ -180,14 +199,14 @@ export function ExportButton({
         </button>
 
         {exportingVideo && (
-          <div className="w-full h-1 bg-white/10 rounded overflow-hidden">
+          <div className="w-full h-1 bg-[#202226] rounded-full overflow-hidden">
             <div
-              className="h-full bg-white/60 transition-all"
+              className="h-full bg-[#4d535e] transition-all"
               style={{ width: `${Math.round(videoProgress * 100)}%` }}
             />
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 }

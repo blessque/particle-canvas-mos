@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Base fonts ─── */
 @font-face {
   font-family: 'ALSHaussNext';
   font-weight: 400;
@@ -26,6 +27,40 @@
        url('/fonts/ALSHaussMono-Regular.woff') format('woff');
 }
 
+/* ─── Condensed family (3 weights used in new UI) ─── */
+@font-face {
+  font-family: 'ALSHaussNextCond';
+  font-weight: 400;
+  font-style: normal;
+  src: url('/fonts/ALSHaussNext-CondensedRegular.woff2') format('woff2'),
+       url('/fonts/ALSHaussNext-CondensedRegular.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'ALSHaussNextCond';
+  font-weight: 500;
+  font-style: normal;
+  src: url('/fonts/ALSHaussNext-CondensedMedium.woff2') format('woff2'),
+       url('/fonts/ALSHaussNext-CondensedMedium.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'ALSHaussNextCond';
+  font-weight: 900;
+  font-style: normal;
+  src: url('/fonts/ALSHaussNext-CondensedBlack.woff2') format('woff2'),
+       url('/fonts/ALSHaussNext-CondensedBlack.woff') format('woff');
+}
+
+/* ─── Mono Book (hex values) ─── */
+@font-face {
+  font-family: 'ALSHaussMonoBook';
+  font-weight: 400;
+  font-style: normal;
+  src: url('/fonts/ALSHaussMono-Book.woff2') format('woff2'),
+       url('/fonts/ALSHaussMono-Book.woff') format('woff');
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -38,16 +73,61 @@ button {
   font-family: 'ALSHaussNextWide', sans-serif;
 }
 
-/* Monospace: numbers, values, hotkeys, code */
+/* Monospace: numbers, values, hotkeys */
 .font-mono, code, kbd, pre {
   font-family: 'ALSHaussMono', monospace;
 }
 
-/* Regular weight override for use inside buttons (e.g. canvas dimensions) */
+/* Regular override inside buttons */
 .font-regular {
   font-family: 'ALSHaussNext', sans-serif;
 }
 
-/* Hide native scrollbar on sidebar containers */
+/* Hide native scrollbar */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ─── Custom range slider ─── */
+.custom-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 16px;
+  border-radius: 100px;
+  background: linear-gradient(
+    to right,
+    #4d535e var(--fill, 0%),
+    #202226 var(--fill, 0%)
+  );
+  box-shadow: inset 0px 1px 2px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  outline: none;
+}
+
+.custom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #9ca3b1;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.custom-slider:hover::-webkit-slider-thumb {
+  transform: scale(1.4);
+}
+
+.custom-slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #9ca3b1;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.custom-slider:hover::-moz-range-thumb {
+  transform: scale(1.4);
+}

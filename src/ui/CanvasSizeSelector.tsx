@@ -8,33 +8,38 @@ const SIZES = [
   { label: '3:4',  w: 1080, h: 1440 },
 ] as const;
 
+function radius(i: number, total: number) {
+  if (total === 1) return 'rounded-[8px]';
+  if (i === 0) return 'rounded-tl-[8px] rounded-tr-[8px] rounded-bl-[2px] rounded-br-[2px]';
+  if (i === total - 1) return 'rounded-bl-[8px] rounded-br-[8px] rounded-tl-[2px] rounded-tr-[2px]';
+  return 'rounded-[2px]';
+}
+
 export function CanvasSizeSelector() {
   const viewport = useUIStore((s) => s.viewport);
   const setDocumentSize = useUIStore((s) => s.setDocumentSize);
 
   return (
-    <div className="p-2 border-b border-white/10">
-      <p className="text-[13px] text-white/40 uppercase tracking-widest px-1 pb-2">Размер холста</p>
-      <div className="flex flex-col gap-1">
-        {SIZES.map(({ label, w, h }) => {
-          const active = viewport.documentWidth === w && viewport.documentHeight === h;
-          return (
-            <button
-              key={label}
-              onClick={() => setDocumentSize(w, h)}
-              className={[
-                'flex items-center justify-between px-2 py-2 rounded text-base transition-colors',
-                active
-                  ? 'bg-white/15 text-white'
-                  : 'text-white/60 hover:bg-white/10 hover:text-white',
-              ].join(' ')}
-            >
-              <span>{label}</span>
-              <span className="text-[13px] text-white/30 font-regular">{w}×{h}</span>
-            </button>
-          );
-        })}
-      </div>
+    <div className="flex flex-col gap-[2px]">
+      {SIZES.map(({ label, w, h }, i) => {
+        const active = viewport.documentWidth === w && viewport.documentHeight === h;
+        return (
+          <button
+            key={label}
+            onClick={() => setDocumentSize(w, h)}
+            className={[
+              'flex items-center justify-between p-[10px] transition-colors',
+              radius(i, SIZES.length),
+              active
+                ? 'bg-[#33373f] text-white'
+                : 'bg-[#202226] text-[#777e8c] hover:bg-[#2a2e35] hover:text-[#9ca3b1]',
+            ].join(' ')}
+          >
+            <span className="font-mono text-[14px] shrink-0">{label}</span>
+            <span className="font-mono text-[14px] opacity-50 shrink-0">{w}×{h}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -3,6 +3,10 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        'cond': ['"ALSHaussNextCond"', 'sans-serif'],
+        'mono-book': ['"ALSHaussMonoBook"', 'monospace'],
+      },
       colors: {
         surface: {
           50: '#f8f9fa',

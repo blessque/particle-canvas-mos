@@ -4,77 +4,88 @@ import { useSceneStore } from '@/store/sceneStore';
 import { uid } from '@/utils/uid';
 import type { ToolType } from '@/types/tools';
 import type { RectangleObject, EllipseObject, StarObject } from '@/types/scene';
-import type { SpeedPreset, AmpPreset } from '@/types/particles';
+
+/* ─── Play / Pause icons ─── */
 
 function PlayIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-      <polygon points="3,1 3,15 14,8" />
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M2.25 5.03288C2.25008 2.12693 5.4165 0.346814 7.95508 1.72624L20.7676 8.69401H20.7666C21.3646 9.0133 21.8647 9.48885 22.2139 10.07C22.564 10.6528 22.749 11.3197 22.749 11.9997C22.749 12.6797 22.5641 13.3474 22.2139 13.9303C21.8648 14.5113 21.3644 14.9861 20.7666 15.3053L7.95508 22.2721L7.95605 22.2731C5.4171 23.6552 2.25032 21.8729 2.25 18.9684V5.03288ZM3.75 18.9684C3.75033 20.6814 5.6515 21.8185 7.23828 20.9548L20.0508 13.988L20.0566 13.985C20.4168 13.7935 20.7186 13.5075 20.9287 13.1579C21.1388 12.8082 21.249 12.4075 21.249 11.9997C21.249 11.592 21.1386 11.1919 20.9287 10.8424C20.7186 10.4928 20.4168 10.2068 20.0566 10.0153L20.0508 10.0114L7.23828 3.04362C5.65105 2.18173 3.75008 3.31918 3.75 5.03288V18.9684Z" fill="currentColor"/>
     </svg>
   );
 }
 
 function PauseIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-      <rect x="2" y="1" width="4" height="14" rx="1" />
-      <rect x="10" y="1" width="4" height="14" rx="1" />
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+      <rect x="4" y="2" width="5" height="20" rx="2"/>
+      <rect x="15" y="2" width="5" height="20" rx="2"/>
     </svg>
   );
 }
 
-const TOOLS: { type: ToolType; label: string; hotkey: string; icon: string }[] = [
-  { type: 'select',    label: 'Выделение',     hotkey: 'V', icon: '↖' },
-  { type: 'rectangle', label: 'Прямоугольник', hotkey: 'R', icon: '▭' },
-  { type: 'ellipse',   label: 'Эллипс',        hotkey: 'O', icon: '◯' },
-  { type: 'star',      label: 'Звезда',        hotkey: 'S', icon: '★' },
-  { type: 'freehand',  label: 'Рисование',     hotkey: 'F', icon: '✏' },
+/* ─── Tool SVG icons ─── */
+
+function IconMove() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M3.85944 3.86185C4.56534 3.15595 5.53123 3.16737 6.50299 3.37356C7.48911 3.58285 8.77373 4.0577 10.3799 4.64993L15.8292 6.65579C16.6222 6.94814 17.2982 7.19618 17.7852 7.46243C18.2835 7.73487 18.756 8.11751 18.8985 8.76321C19.0411 9.40993 18.7723 9.95642 18.4337 10.4126C18.1855 10.7469 17.8364 11.116 17.4249 11.5318L15.793 13.1665C15.5003 13.4595 15.0255 13.4591 14.7325 13.1665C14.4395 12.8738 14.4388 12.399 14.7315 12.106L15.9337 10.9029L16.7266 10.0992C16.9401 9.87436 17.1052 9.68652 17.2296 9.51907C17.4704 9.19453 17.437 9.10174 17.4337 9.08645C17.4301 9.07001 17.4196 8.97147 17.0655 8.77786C16.6992 8.5777 16.1502 8.3735 15.3106 8.06399L9.86139 6.05813C8.20765 5.44838 7.04534 5.02255 6.19147 4.84134C5.32363 4.65721 5.05398 4.78839 4.91998 4.92239C4.78631 5.05625 4.65538 5.32548 4.8399 6.1929C5.02152 7.04662 5.44736 8.20737 6.0567 9.86087L8.06354 15.3111C8.37307 16.1507 8.57818 16.6996 8.77838 17.0659C8.97253 17.4212 9.07081 17.4298 9.086 17.4331C9.10295 17.437 9.19714 17.4682 9.51959 17.229C9.85454 16.9806 10.2701 16.5675 10.9024 15.9341L12.1065 14.731C12.3996 14.4387 12.8744 14.4391 13.1671 14.732C13.4596 15.025 13.459 15.4998 13.1661 15.7925L11.963 16.9947C11.3657 17.5929 10.859 18.1035 10.4131 18.4341C9.95671 18.7726 9.4106 19.0404 8.76471 18.899C8.1179 18.7573 7.73433 18.284 7.46197 17.7857C7.19577 17.2986 6.94861 16.6225 6.65631 15.8296L4.64947 10.3794C4.05794 8.77425 3.58281 7.49085 3.37311 6.5054C3.16652 5.53425 3.15347 4.56806 3.85944 3.86185Z" fill="currentColor"/>
+      <path opacity="0.5" d="M14.7319 12.1058C15.0248 11.8129 15.4995 11.8129 15.7924 12.1058L19.7309 16.0433C19.9278 16.2402 20.1013 16.4143 20.2358 16.5687C20.3747 16.7283 20.5068 16.9064 20.5981 17.1253L20.5991 17.1282C20.7996 17.6143 20.7996 18.1597 20.5991 18.6458L20.5981 18.6487C20.5068 18.8677 20.3747 19.0458 20.2358 19.2054C20.1013 19.3598 19.9278 19.5338 19.7309 19.7308C19.5341 19.9275 19.3596 20.1012 19.2055 20.2357C19.0862 20.3397 18.9566 20.4413 18.8061 20.5237L18.6479 20.5989C18.1611 20.8006 17.6154 20.8008 17.1284 20.5989V20.5999C16.9074 20.5088 16.7283 20.3756 16.5688 20.2366C16.4144 20.1021 16.2401 19.9275 16.0434 19.7308L12.1059 15.7923C11.813 15.4994 11.813 15.0246 12.1059 14.7317C12.3988 14.4389 12.8736 14.4389 13.1664 14.7317L17.1049 18.6692C17.3162 18.8805 17.4475 19.0128 17.5541 19.1058C17.6534 19.1923 17.6916 19.2088 17.6996 19.2122L17.7026 19.2132C17.8208 19.2623 17.9534 19.263 18.0737 19.2132H18.0746C18.0821 19.2101 18.12 19.1931 18.2202 19.1058C18.3268 19.0127 18.4582 18.8804 18.6694 18.6692C18.8803 18.4583 19.0122 18.3266 19.1049 18.22C19.1931 18.1187 19.2106 18.0805 19.2143 18.0716C19.2623 17.9533 19.2623 17.8207 19.2143 17.7025L19.1909 17.6634C19.1751 17.6401 19.1492 17.6048 19.1049 17.554C19.0122 17.4475 18.8803 17.3157 18.6694 17.1048L14.7319 13.1663C14.439 12.8734 14.439 12.3987 14.7319 12.1058Z" fill="currentColor"/>
+    </svg>
+  );
+}
+
+function IconStar() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M11.9997 1.25C12.8328 1.25 13.4225 1.77317 13.8991 2.39551C14.3754 3.01739 14.8804 3.92894 15.5017 5.04297L15.8298 5.63086L16.0749 6.06348C16.2745 6.407 16.3547 6.50933 16.4489 6.58105C16.569 6.67242 16.725 6.72382 17.4899 6.89648L18.1267 7.04004C19.3311 7.31276 20.3218 7.53538 21.0397 7.81836C21.7261 8.08893 22.3317 8.47955 22.6081 9.18066L22.6589 9.3252C22.9026 10.1098 22.6287 10.8324 22.2048 11.5059C21.7859 12.1713 21.1121 12.9553 20.2897 13.917L19.8561 14.4248L19.8552 14.4238C19.3382 15.0288 19.2309 15.1773 19.1804 15.3398C19.1287 15.5068 19.1337 15.7002 19.2116 16.5039L19.277 17.1816C19.4012 18.4659 19.5047 19.5111 19.4694 20.3037C19.4341 21.0975 19.2538 21.8602 18.5983 22.3574C17.9308 22.8637 17.1536 22.8066 16.404 22.5918C15.6639 22.3797 14.738 21.9515 13.611 21.4326L13.0153 21.1582H13.0134C12.298 20.8278 12.1437 20.7754 11.9997 20.7754C11.8558 20.7754 11.7011 20.828 10.986 21.1582L10.3894 21.4326C9.26181 21.9516 8.33535 22.3797 7.59541 22.5918C6.84635 22.8065 6.07016 22.8642 5.40302 22.3584C4.7473 21.8608 4.56647 21.098 4.53095 20.3037C4.49556 19.5109 4.59822 18.4657 4.72236 17.1816L4.78877 16.5049C4.8668 15.6985 4.87072 15.5074 4.81904 15.3428L4.81806 15.3379C4.76839 15.1765 4.66097 15.0294 4.14423 14.4258L4.14326 14.4248L3.70966 13.917C2.88734 12.9559 2.21458 12.1724 1.7956 11.5068C1.37164 10.8333 1.09722 10.1108 1.34052 9.32617C1.5868 8.53253 2.2283 8.10602 2.96064 7.81738C3.679 7.53431 4.67026 7.31226 5.8747 7.04004L6.51044 6.89648L6.97822 6.78711C7.34947 6.69566 7.46015 6.64925 7.55146 6.58008C7.67712 6.48483 7.77627 6.33672 8.16962 5.63086L8.49775 5.04297C9.11899 3.92894 9.625 3.01739 10.1013 2.39551C10.5778 1.77333 11.1669 1.2501 11.9997 1.25ZM11.9997 2.75C11.8858 2.75006 11.6847 2.79454 11.2917 3.30762C10.898 3.82173 10.454 4.61547 9.8083 5.77344L9.48017 6.36133C9.15358 6.94738 8.89402 7.44467 8.45771 7.77539C8.12748 8.0257 7.74048 8.14868 7.29951 8.25488L6.20576 8.50391C4.95039 8.78764 4.09555 8.98326 3.51044 9.21387C2.93943 9.43895 2.81886 9.62316 2.77314 9.77051C2.72476 9.92667 2.72414 10.1653 3.06513 10.707C3.32486 11.1197 3.7184 11.6089 4.25947 12.249L5.28291 13.4502C5.71665 13.9568 6.08764 14.3671 6.25068 14.8936L6.30146 15.0908C6.39782 15.5566 6.33959 16.0545 6.28193 16.6504L6.21552 17.3271C6.08674 18.6593 5.99946 19.5766 6.029 20.2373C6.05848 20.8961 6.19804 21.0786 6.30927 21.1631L6.35029 21.1914C6.45872 21.2545 6.66317 21.2992 7.18232 21.1504C7.78532 20.9775 8.58706 20.6103 9.7624 20.0693L10.3571 19.7959C10.9496 19.5223 11.4498 19.2755 11.9997 19.2754C12.5491 19.2754 13.0487 19.5217 13.6403 19.7949L14.238 20.0693C15.4124 20.6101 16.2143 20.9767 16.8171 21.1494C17.4104 21.3194 17.5936 21.2368 17.6921 21.1621C17.8024 21.0782 17.941 20.896 17.9704 20.2373C17.9998 19.5766 17.9136 18.6593 17.7849 17.3271L17.7185 16.6494C17.6525 15.9687 17.5856 15.4174 17.7477 14.8945L17.8181 14.7021C18.0043 14.2646 18.3359 13.8945 18.7165 13.4492L19.1501 12.9424L19.7409 12.249C20.2818 11.6088 20.6755 11.1196 20.9352 10.707C21.2766 10.1647 21.2745 9.9259 21.2263 9.77051C21.1798 9.62276 21.0583 9.43795 20.4899 9.21387C19.9052 8.98336 19.0509 8.78814 17.7956 8.50391L17.1589 8.35938C16.5244 8.21618 15.9804 8.10978 15.5407 7.77539C15.215 7.52763 14.988 7.18607 14.7565 6.7832L14.5202 6.36133L14.1921 5.77344C13.5463 4.61546 13.1014 3.82174 12.7077 3.30762C12.3146 2.79441 12.1135 2.75 11.9997 2.75Z" fill="currentColor"/>
+    </svg>
+  );
+}
+
+function IconEllipse() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21C16.9706 21 21 16.9706 21 12ZM22.5 12C22.5 17.799 17.799 22.5 12 22.5C6.20101 22.5 1.5 17.799 1.5 12C1.5 6.20101 6.20101 1.5 12 1.5C17.799 1.5 22.5 6.20101 22.5 12Z" fill="currentColor"/>
+    </svg>
+  );
+}
+
+function IconRect() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M21.25 12C21.25 9.62193 21.248 7.91411 21.0732 6.61426C20.9013 5.3362 20.5749 4.56468 20.0049 3.99414C19.4356 3.42482 18.6648 3.0986 17.3867 2.92676C16.0868 2.75203 14.3782 2.75 12 2.75C9.62198 2.75 7.91415 2.75207 6.61426 2.92676C5.33597 3.09857 4.56468 3.42536 3.99414 3.99512L3.99316 3.99414C3.42407 4.56398 3.09853 5.33547 2.92676 6.61328C2.75203 7.91334 2.75 9.62181 2.75 12C2.75 14.3782 2.75203 16.0867 2.92676 17.3867C3.0986 18.6653 3.42496 19.4361 3.99414 20.0049C4.56405 20.5748 5.3351 20.9013 6.61328 21.0732C7.9133 21.2481 9.62179 21.25 12 21.25C14.3782 21.25 16.0867 21.2481 17.3867 21.0732C18.6651 20.9013 19.4351 20.5744 20.0039 20.0049H20.0049C20.5746 19.4355 20.9013 18.6647 21.0732 17.3867C21.2481 16.0868 21.25 14.3782 21.25 12ZM22.75 12C22.75 14.3356 22.7519 16.1629 22.5605 17.5859C22.3784 18.9402 22.0102 20.0269 21.2275 20.8945L21.0654 21.0654C20.1714 21.9605 19.0314 22.3663 17.5869 22.5605C16.1637 22.752 14.3358 22.75 12 22.75C9.66445 22.75 7.83723 22.7519 6.41406 22.5605C5.05956 22.3784 3.97251 22.0102 3.10449 21.2275L2.93359 21.0654C2.03897 20.1713 1.63362 19.0313 1.43945 17.5869C1.24818 16.1637 1.25 14.3358 1.25 12C1.25 9.66439 1.24823 7.83721 1.43945 6.41406C1.63363 4.96931 2.03915 3.82865 2.93359 2.93359L3.10449 2.77148C3.9729 1.98926 5.05951 1.62152 6.41406 1.43945C7.83714 1.24818 9.6642 1.25 12 1.25C14.3357 1.25 16.1629 1.24821 17.5859 1.43945C19.0306 1.63363 20.1708 2.03898 21.0654 2.93359L21.2275 3.10449C22.0102 3.97286 22.3784 5.0595 22.5605 6.41406C22.7519 7.83717 22.75 9.66426 22.75 12Z" fill="currentColor"/>
+    </svg>
+  );
+}
+
+function IconFreehand() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M21.2499 5.93286C21.2499 5.08888 20.9141 4.27867 20.3173 3.68188C19.7206 3.08533 18.9111 2.75024 18.0673 2.75024C17.2235 2.75028 16.4141 3.08527 15.8173 3.68188L6.36908 13.1282C5.77924 13.719 5.52959 13.9719 5.31634 14.2454C5.0571 14.5781 4.83416 14.938 4.65228 15.3186C4.50392 15.6311 4.39104 15.9685 4.12787 16.7581L2.76556 20.842C2.74724 20.8967 2.74359 20.9558 2.75677 21.012C2.76997 21.0681 2.79901 21.1196 2.83978 21.1604C2.88054 21.2011 2.93215 21.2292 2.98822 21.2424C3.04423 21.2556 3.1026 21.2529 3.15716 21.2346L3.9599 20.967L3.96088 20.9661L7.24213 19.8723C8.03313 19.609 8.36963 19.4956 8.68256 19.3469C9.06438 19.1652 9.42112 18.944 9.75384 18.6838C10.0271 18.4708 10.2805 18.2206 10.8701 17.6311L20.3173 8.18286C20.914 7.58617 21.2498 6.7767 21.2499 5.93286Z" fill="currentColor"/>
+      <path opacity="0.5" d="M4.72827 21.1473L3.66772 22.2078L1.79175 20.3318L2.85229 19.2713L4.72827 21.1473ZM15.1082 4.034L15.1091 4.03595C15.1098 4.04392 15.1106 4.05959 15.113 4.08087C15.1179 4.12344 15.1274 4.19119 15.1433 4.28009C15.1754 4.45881 15.235 4.72113 15.3435 5.034C15.5607 5.66002 15.971 6.48272 16.7439 7.25568C17.5167 8.02848 18.3389 8.43809 18.9646 8.65509C19.2775 8.76357 19.5398 8.82327 19.7185 8.85529C19.8074 8.87121 19.8751 8.88069 19.9177 8.88556C19.939 8.88799 19.9547 8.88879 19.9626 8.88947L19.9685 8.89044H19.9656C19.9652 8.89273 19.9619 8.93294 19.9207 9.63849C19.8793 10.3468 19.8771 10.3855 19.8767 10.3875H19.8708C19.8684 10.3873 19.8654 10.3868 19.8621 10.3865C19.8549 10.386 19.8456 10.3855 19.8347 10.3846C19.813 10.3827 19.7838 10.3799 19.7478 10.3758C19.6759 10.3676 19.5764 10.3538 19.4539 10.3318C19.209 10.288 18.8699 10.2105 18.4734 10.0731C17.6801 9.79801 16.6483 9.28119 15.6833 8.31622C14.7185 7.35132 14.2018 6.31955 13.9265 5.52618C13.7889 5.1296 13.7107 4.79059 13.6667 4.54572C13.6448 4.42328 13.6311 4.32367 13.6228 4.25177C13.6187 4.21592 13.6159 4.18657 13.614 4.16486C13.6131 4.15399 13.6126 4.14463 13.6121 4.13751C13.6118 4.13417 13.6122 4.13121 13.6121 4.12872C13.612 4.12743 13.6111 4.12587 13.6111 4.12482V4.12286L15.1082 4.034Z" fill="currentColor"/>
+    </svg>
+  );
+}
+
+/* ─── Tool definitions ─── */
+
+const TOOLS: {
+  type: ToolType;
+  hotkey: string;
+  Icon: () => JSX.Element;
+}[] = [
+  { type: 'select',    hotkey: 'V', Icon: IconMove },
+  { type: 'star',      hotkey: 'S', Icon: IconStar },
+  { type: 'ellipse',   hotkey: 'O', Icon: IconEllipse },
+  { type: 'rectangle', hotkey: 'R', Icon: IconRect },
+  { type: 'freehand',  hotkey: 'F', Icon: IconFreehand },
 ];
 
 const ARC_MODES = [
   { mode: 'full'    as const, icon: '◯', label: 'Полный эллипс' },
   { mode: 'half'    as const, icon: '⌓', label: 'Полудуга' },
   { mode: 'quarter' as const, icon: '◜', label: 'Четверть дуги' },
-];
-
-function ToolButton({
-  tool,
-  activeTool,
-  onClick,
-}: {
-  tool: typeof TOOLS[number];
-  activeTool: ToolType;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      title={tool.label}
-      className={[
-        'flex flex-col items-center px-2 py-1.5 rounded-xl w-11 transition-colors',
-        activeTool === tool.type
-          ? 'bg-white/15 text-white'
-          : 'text-white/50 hover:bg-white/10 hover:text-white',
-      ].join(' ')}
-    >
-      <span className="text-xl leading-none">{tool.icon}</span>
-      <span className="text-[10px] font-mono text-white/30 mt-0.5">{tool.hotkey}</span>
-    </button>
-  );
-}
-
-const SPEED_PRESETS: { value: SpeedPreset; label: string }[] = [
-  { value: 1, label: '1' },
-  { value: 2, label: '2' },
-  { value: 3, label: '3' },
-  { value: 4, label: '4' },
-];
-
-const AMP_PRESETS: { value: AmpPreset; label: string }[] = [
-  { value: 1, label: 'S' },
-  { value: 2, label: 'M' },
-  { value: 3, label: 'L' },
-  { value: 4, label: 'XL' },
 ];
 
 const PLACE_TOOLS = new Set<ToolType>(['rectangle', 'ellipse', 'star']);
@@ -86,8 +97,6 @@ export function BottomBar() {
   const setEllipseMode = useUIStore((s) => s.setEllipseMode);
   const animationPlaying = useUIStore((s) => s.animationPlaying);
   const setAnimationPlaying = useUIStore((s) => s.setAnimationPlaying);
-  const animationConfig = useUIStore((s) => s.animationConfig);
-  const setAnimationPresets = useUIStore((s) => s.setAnimationPresets);
 
   function placeShapeAtCenter(type: 'rectangle' | 'ellipse' | 'star') {
     const { documentWidth: dw, documentHeight: dh } = useUIStore.getState().viewport;
@@ -116,95 +125,72 @@ export function BottomBar() {
   }
 
   return (
-    <div className="relative shrink-0 flex items-center px-4 pb-3 pt-2 bg-[#111112]">
-      {/* Left island — Playback */}
-      <div className="flex items-center gap-3 bg-white/[0.06] rounded-2xl px-3 py-2 shrink-0">
-        <button
-          onClick={() => setAnimationPlaying(!animationPlaying)}
-          title={animationPlaying ? 'Остановить (Space)' : 'Запустить (Space)'}
-          className="w-8 h-8 flex items-center justify-center rounded-xl text-white/70 hover:bg-white/10 hover:text-white transition-colors"
-        >
-          {animationPlaying ? <PauseIcon /> : <PlayIcon />}
-        </button>
-        <span className="text-[10px] text-white/20">Space</span>
-
-        {(animationConfig.mode === 'brownian' || animationConfig.mode === 'directional') && (
-          <>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-white/30 w-8">Темп</span>
-              <div className="flex gap-0.5">
-                {SPEED_PRESETS.map(({ value, label }) => (
-                  <button
-                    key={value}
-                    onClick={() => setAnimationPresets(value, animationConfig.ampPreset)}
-                    className={[
-                      'w-7 h-6 rounded text-[11px] transition-colors',
-                      animationConfig.speedPreset === value
-                        ? 'bg-white/20 text-white'
-                        : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70',
-                    ].join(' ')}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-white/30 w-12">Амплит.</span>
-              <div className="flex gap-0.5">
-                {AMP_PRESETS.map(({ value, label }) => (
-                  <button
-                    key={value}
-                    onClick={() => setAnimationPresets(animationConfig.speedPreset, value)}
-                    className={[
-                      'w-7 h-6 rounded text-[11px] transition-colors',
-                      animationConfig.ampPreset === value
-                        ? 'bg-white/20 text-white'
-                        : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70',
-                    ].join(' ')}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Center island — Tools (absolute, horizontally centered) */}
-      <div className="absolute left-1/2 -translate-x-1/2 flex items-end gap-0.5 bg-white/[0.06] rounded-2xl px-2 py-1.5">
+    <div className="relative flex items-center justify-center h-[68px] bg-black px-4 shrink-0">
+      {/* Centered tools pill */}
+      <div className="bg-[#0e0f11] rounded-[22px] px-[6px] py-[8px] flex gap-[2px]">
         {TOOLS.map((tool) =>
           tool.type === 'ellipse' ? (
             <div key="ellipse" className="relative">
               {activeTool === 'ellipse' && (
-                <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-white/[0.08] rounded-xl px-1.5 py-1">
+                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 flex items-center gap-[2px] bg-[#0e0f11] rounded-[14px] px-[6px] py-[6px]">
                   {ARC_MODES.map(({ mode, icon, label }) => (
                     <button
                       key={mode}
                       onClick={() => setEllipseMode(mode)}
                       title={label}
                       className={[
-                        'px-2 py-1 rounded-lg text-base transition-colors',
+                        'px-2 py-1 rounded-[4px] text-base transition-colors',
                         ellipseMode === mode
-                          ? 'bg-white/15 text-white'
-                          : 'text-white/40 hover:bg-white/10 hover:text-white',
+                          ? 'bg-[#33373f] text-white'
+                          : 'text-[#777e8c] hover:bg-[#1a1d21]',
                       ].join(' ')}
                     >
                       {icon}
                     </button>
                   ))}
-                  <span className="text-[10px] text-white/25 ml-1 font-mono">⌥O</span>
+                  <span className="text-[10px] text-[#454a55] ml-1 font-mono">⌥O</span>
                 </div>
               )}
-              <ToolButton tool={tool} activeTool={activeTool} onClick={getToolClickHandler(tool.type)} />
+              <button
+                onClick={getToolClickHandler(tool.type)}
+                className={[
+                  'flex flex-col items-center justify-center gap-1 h-[44px] px-2 rounded-[4px] transition-colors',
+                  activeTool === tool.type
+                    ? 'bg-[#33373f] text-white'
+                    : 'text-[#777e8c] hover:bg-[#1a1d21]',
+                ].join(' ')}
+              >
+                <tool.Icon />
+                <span className="font-cond text-[10px] leading-none">{tool.hotkey}</span>
+              </button>
             </div>
           ) : (
-            <ToolButton key={tool.type} tool={tool} activeTool={activeTool} onClick={getToolClickHandler(tool.type)} />
+            <button
+              key={tool.type}
+              onClick={getToolClickHandler(tool.type)}
+              className={[
+                'flex flex-col items-center justify-center gap-1 h-[44px] px-2 rounded-[4px] transition-colors',
+                activeTool === tool.type
+                  ? 'bg-[#33373f] text-white'
+                  : 'text-[#777e8c] hover:bg-[#1a1d21]',
+              ].join(' ')}
+            >
+              <tool.Icon />
+              <span className="font-cond text-[10px] leading-none">{tool.hotkey}</span>
+            </button>
           )
         )}
       </div>
+
+      {/* Play / Pause — absolute right */}
+      <button
+        onClick={() => setAnimationPlaying(!animationPlaying)}
+        title={animationPlaying ? 'Пауза (Space)' : 'Запустить (Space)'}
+        className="absolute right-4 flex items-center gap-2 px-1 py-2 rounded-[4px] font-cond text-[18px] text-[#777e8c] hover:text-white transition-colors"
+      >
+        {animationPlaying ? <PauseIcon /> : <PlayIcon />}
+        {animationPlaying ? 'Пауза' : 'Запустить'}
+      </button>
     </div>
   );
 }
