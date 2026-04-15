@@ -95,8 +95,8 @@ export function ParticlePanel() {
   const animationConfig = useUIStore((s) => s.animationConfig);
   const setAnimationConfig = useUIStore((s) => s.setAnimationConfig);
 
-  const [baseSize, setBaseSize] = useState(config.minSize);
-  const [sizeVariance, setSizeVariance] = useState(0);
+  const [baseSize, setBaseSize] = useState(1);
+  const [volumetric, setVolumetric] = useState(true);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -148,32 +148,33 @@ export function ParticlePanel() {
         step={0.5}
         onChange={(v) => {
           setBaseSize(v);
-          applySize(v, sizeVariance);
+          applySize(v, volumetric ? 80 : 0);
         }}
       />
 
-      <SliderRow
-        label="Разброс размера"
-        value={sizeVariance}
-        min={0}
-        max={100}
-        step={5}
-        displayValue={`${sizeVariance}%`}
-        onChange={(v) => {
-          setSizeVariance(v);
-          applySize(baseSize, v);
-        }}
-      />
-
-      <SliderRow
-        label="Разброс прозрачности"
-        value={Math.round(config.falloffBias * 100)}
-        min={0}
-        max={100}
-        step={5}
-        displayValue={`${Math.round(config.falloffBias * 100)}%`}
-        onChange={(v) => updateConfig({ falloffBias: v / 100, baseOpacity: 1.0, opacityRandomize: true })}
-      />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-0.5">
+          {(['flat', 'volumetric'] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => {
+                const vol = v === 'volumetric';
+                setVolumetric(vol);
+                applySize(baseSize, vol ? 80 : 0);
+                updateConfig({ falloffBias: vol ? 0.8 : 0 });
+              }}
+              className={[
+                'px-1.5 py-0.5 rounded text-[11px] transition-colors',
+                (v === 'volumetric') === volumetric
+                  ? 'bg-white/15 text-white'
+                  : 'text-white/30 hover:bg-white/10 hover:text-white/60',
+              ].join(' ')}
+            >
+              {v === 'flat' ? 'Плоские' : 'Объемные'}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="flex flex-col gap-0.5">
         <div className="flex justify-between items-center text-[15px] text-white/50">

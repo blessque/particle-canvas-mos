@@ -83,8 +83,8 @@ export const DEFAULT_ANIMATION_CONFIG: AnimationConfig = {
 /** Default config to use when initializing the store */
 export const DEFAULT_PARTICLE_CONFIG: ParticleConfig = {
   count: 3000,
-  minSize: 1,
-  maxSize: 1,
+  minSize: 0.5,
+  maxSize: 1.8,
   color: '#ffffff',
   opacityRandomize: true,
   baseOpacity: 0.8,
@@ -92,7 +92,7 @@ export const DEFAULT_PARTICLE_CONFIG: ParticleConfig = {
   falloffType: 'gaussian',
   falloffDistance: 40,
   falloffMode: 'absolute',
-  falloffBias: 0.5,
+  falloffBias: 0.8,
   seed: 42,
   anchorFraction: 0.4,
 };
