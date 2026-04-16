@@ -12,5 +12,5 @@ Update after each session.
 - [x] Phase 8: SVG import — path extraction, flatten transforms, particles on imported paths
 - [ ] Phase 9: Raster import — brightness sampling, density-based particle distribution
 - [x] Phase 10: Export — PNG with transparency, SVG with particle circles
-- [~] Phase 11: UI polish — canvas color contrast, margins, aspect ratio templates, ellipse arc modes done; responsive/mobile pending
+- [x] Phase 11: UI polish — full visual redesign: dark slate palette, ALS Hauss Next Cond typography, card panels, custom sliders, SVG icons, animation controls moved to sidebar
 - [ ] Phase 12: Templates/presets (stretch goal)

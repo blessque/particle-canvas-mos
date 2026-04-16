@@ -55,7 +55,7 @@ export const useUIStore = create<UIStoreState>((set) => ({
   leftPanelOpen: true,
   exportDialogOpen: false,
   ellipseMode: 'full',
-  canvasColor: '#000000',
+  canvasColor: '#0E0F11',
   animationConfig: { ...DEFAULT_ANIMATION_CONFIG, mode: 'brownian' as const },
   animationPlaying: false,
   videoDuration: DEFAULT_VIDEO_DURATION as VideoDuration,
