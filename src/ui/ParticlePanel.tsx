@@ -9,6 +9,10 @@ import type { SpeedPreset, AmpPreset } from '@/types/particles';
 
 /* ─── Shared primitive components ─── */
 
+const THUMB_SIZE = 10;
+const THUMB_OVERHANG = 0;
+const TRACK_PAD = 3; // matches padding: 0 3px on .custom-slider
+
 function SliderRow({
   label,
   value,
@@ -26,7 +30,25 @@ function SliderRow({
   displayValue?: string;
   onChange: (v: number) => void;
 }) {
-  const pct = ((value - min) / (max - min)) * 100;
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [trackWidth, setTrackWidth] = useState(0);
+
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setTrackWidth(el.offsetWidth));
+    ro.observe(el);
+    setTrackWidth(el.offsetWidth);
+    return () => ro.disconnect();
+  }, []);
+
+  const rawFraction = (value - min) / (max - min);
+  // Thumb travels from TRACK_PAD to (trackWidth - TRACK_PAD), clamped by thumb size.
+  // Corrected fill-end: thumb center (with padding + browser clamping) + overhang.
+  const fillEndPct = trackWidth > 0
+    ? ((TRACK_PAD + THUMB_SIZE / 2 + rawFraction * (trackWidth - 2 * TRACK_PAD - THUMB_SIZE) + THUMB_OVERHANG) / trackWidth) * 100
+    : rawFraction * 100;
+
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex justify-between items-baseline px-0.5">
@@ -38,6 +60,7 @@ function SliderRow({
         </span>
       </div>
       <input
+        ref={inputRef}
         type="range"
         min={min}
         max={max}
@@ -45,7 +68,7 @@ function SliderRow({
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         className="custom-slider"
-        style={{ '--fill': `${pct}%` } as React.CSSProperties}
+        style={{ '--fill': `${fillEndPct}%` } as React.CSSProperties}
       />
     </div>
   );

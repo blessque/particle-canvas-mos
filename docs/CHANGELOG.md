@@ -9,6 +9,7 @@ Full release notes live in the Claude memory file:
 
 | Date | Iteration | What |
 |------|-----------|------|
+| 2026-04-16 | 17 | Slider fill-end precision fix: JS-computed thumb center with track padding; symmetric 3px fill overhang on all sides; bottom toolbar pill padding equalised |
 | 2026-04-16 | 16 | Full UI redesign: dark slate palette, condensed typography, rounded card panels, custom sliders, SVG icons, animation controls in sidebar; default canvas color #0E0F11 |
 | 2026-04-15 | 15 | Replace size/opacity variance sliders with Плоские/Объемные binary toggle; Объемные default (80% variance) |
 | 2026-03-27 | 13 | Loop-perfect video export: preset-driven speed quantisation, pill UI for Темп/Амплит., crossfade removed |

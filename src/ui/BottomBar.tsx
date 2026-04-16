@@ -135,7 +135,7 @@ export function BottomBar() {
     <div className="flex items-center justify-center h-[68px] bg-black px-4 shrink-0">
       <div className="flex items-center gap-2">
         {/* Centered tools pill */}
-        <div className="bg-[#0e0f11] rounded-[22px] px-[6px] py-[8px] flex gap-[2px]">
+        <div className="bg-[#0e0f11] rounded-[22px] px-[6px] py-[6px] flex gap-[2px]">
           {TOOLS.map((tool, i) =>
             tool.type === 'ellipse' ? (
               <div key="ellipse" className="relative">
