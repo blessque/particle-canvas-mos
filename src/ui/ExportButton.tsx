@@ -119,6 +119,9 @@ export function ExportButton({
         },
         setVideoProgress,
       );
+    } catch (err) {
+      console.error('Video export failed:', err);
+      alert('Ошибка экспорта видео. Проверьте консоль.');
     } finally {
       setExportingVideo(false);
       setVideoProgress(0);

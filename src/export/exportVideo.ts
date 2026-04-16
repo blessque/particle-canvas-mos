@@ -50,8 +50,48 @@ function triggerDownload(data: Uint8Array, filename: string): void {
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
+  a.style.display = 'none';
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+  // Delay revocation — Safari needs time to read the blob before it's released
+  setTimeout(() => URL.revokeObjectURL(url), 30_000);
+}
+
+/**
+ * Returns the first H.264 codec string that VideoEncoder reports as supported.
+ * Safari 17 supports H.264 but not all profiles/levels that Chrome accepts.
+ */
+async function pickSupportedCodec(
+  w: number,
+  h: number,
+  fps: number,
+  bitrate: number,
+): Promise<string> {
+  const candidates = [
+    'avc1.640034', // High Profile Level 5.2
+    'avc1.4D0034', // Main Profile Level 5.2
+    'avc1.420034', // Baseline Profile Level 5.2
+    'avc1.64002A', // High Profile Level 4.2
+    'avc1.4D401F', // Main Profile Level 3.1
+    'avc1.42E01E', // Baseline Profile Level 3.0 — broadest Safari support
+  ];
+  for (const codec of candidates) {
+    try {
+      const result = await VideoEncoder.isConfigSupported({
+        codec,
+        width: w,
+        height: h,
+        bitrate,
+        framerate: fps,
+      });
+      if (result.supported) return codec;
+    } catch {
+      // isConfigSupported not supported or codec rejected — try next
+    }
+  }
+  // Last-resort fallback
+  return 'avc1.42E01E';
 }
 
 export async function exportVideo(
@@ -78,6 +118,9 @@ export async function exportVideo(
   const canvas = new OffscreenCanvas(w, h);
   const ctx = canvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
 
+  const bitrate = 8_000_000;
+  const codec = await pickSupportedCodec(w, h, fps, bitrate);
+
   const target = new ArrayBufferTarget();
   const muxer = new Muxer({
     target,
@@ -89,16 +132,44 @@ export async function exportVideo(
     fastStart: 'in-memory',
   });
 
+  const frameDuration = Math.round(1_000_000 / fps);
+
+  let encoderError: unknown = null;
   const encoder = new VideoEncoder({
-    output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
-    error: (e) => { throw e; },
+    output: (chunk, meta) => {
+      // Shallow-copy meta with colorSpace filled in (Safari sets it to null).
+      // Mutation of the original would fail — Safari's WebCodecs objects are non-configurable.
+      let safeMeta = meta;
+      if (meta?.decoderConfig && meta.decoderConfig.colorSpace == null) {
+        safeMeta = {
+          ...meta,
+          decoderConfig: {
+            ...meta.decoderConfig,
+            colorSpace: {
+              primaries: 'bt709',
+              transfer: 'bt709',
+              matrix: 'bt709',
+              fullRange: false,
+            },
+          },
+        };
+      }
+      // Use addVideoChunkRaw so we can supply explicit duration.
+      // addVideoChunk has no duration override — it always uses chunk.duration,
+      // which Safari sets to null, causing mp4-muxer to throw.
+      const data = new Uint8Array(chunk.byteLength);
+      chunk.copyTo(data);
+      const chunkDuration = chunk.duration ?? frameDuration;
+      muxer.addVideoChunkRaw(data, chunk.type, chunk.timestamp, chunkDuration, safeMeta);
+    },
+    error: (e) => { encoderError = e; },
   });
 
   encoder.configure({
-    codec: 'avc1.420034', // H.264 High Profile Level 5.2
+    codec,
     width: w,
     height: h,
-    bitrate: 8_000_000,
+    bitrate,
     framerate: fps,
   });
 
@@ -107,6 +178,8 @@ export async function exportVideo(
   // No crossfade needed.
 
   for (let i = 0; i < totalFrames; i++) {
+    if (encoderError) throw encoderError;
+
     const elapsed = i / fps;
 
     const particles = computeFrame(animatedParticles, animationConfig, elapsed);
@@ -125,6 +198,7 @@ export async function exportVideo(
   }
 
   await encoder.flush();
+  if (encoderError) throw encoderError;
   encoder.close();
   muxer.finalize();
 
