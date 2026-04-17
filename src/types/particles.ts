@@ -90,5 +90,5 @@ export const DEFAULT_PARTICLE_CONFIG: ParticleConfig = {
   falloffDistance: 40,
   falloffBias: 0.8,
   seed: 42,
-  anchorFraction: 0.4,
+  anchorFraction: 0.2,
 };

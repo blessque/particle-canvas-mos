@@ -21,15 +21,13 @@ export function getHandles(obj: SceneObject): HandleInfo[] {
     { id: 'se', pos: { x: x + w, y: y + h },     cursor: 'nwse-resize' },
   ];
 
-  // Midpoint edge handles only for rectangle (ellipse + star resize from bbox corners)
-  if (obj.type === 'rectangle') {
-    handles.push(
-      { id: 'n', pos: { x: x + w / 2, y },          cursor: 'ns-resize' },
-      { id: 's', pos: { x: x + w / 2, y: y + h },   cursor: 'ns-resize' },
-      { id: 'e', pos: { x: x + w, y: y + h / 2 },   cursor: 'ew-resize' },
-      { id: 'w', pos: { x, y: y + h / 2 },          cursor: 'ew-resize' },
-    );
-  }
+  // Midpoint edge handles for all resizable shapes
+  handles.push(
+    { id: 'n', pos: { x: x + w / 2, y },          cursor: 'ns-resize' },
+    { id: 's', pos: { x: x + w / 2, y: y + h },   cursor: 'ns-resize' },
+    { id: 'e', pos: { x: x + w, y: y + h / 2 },   cursor: 'ew-resize' },
+    { id: 'w', pos: { x, y: y + h / 2 },          cursor: 'ew-resize' },
+  );
 
   return handles;
 }

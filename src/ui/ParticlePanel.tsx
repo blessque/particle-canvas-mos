@@ -13,6 +13,11 @@ const THUMB_SIZE = 10;
 const THUMB_OVERHANG = 0;
 const TRACK_PAD = 3; // matches padding: 0 3px on .custom-slider
 
+function stepPct(v: number, min: number, max: number, trackWidth: number): number {
+  const fraction = (v - min) / (max - min);
+  return ((TRACK_PAD + THUMB_SIZE / 2 + fraction * (trackWidth - 2 * TRACK_PAD - THUMB_SIZE)) / trackWidth) * 100;
+}
+
 function SliderRow({
   label,
   value,
@@ -20,6 +25,7 @@ function SliderRow({
   max,
   step,
   displayValue,
+  showDots,
   onChange,
 }: {
   label: string;
@@ -28,6 +34,7 @@ function SliderRow({
   max: number;
   step: number;
   displayValue?: string;
+  showDots?: boolean;
   onChange: (v: number) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -43,11 +50,16 @@ function SliderRow({
   }, []);
 
   const rawFraction = (value - min) / (max - min);
-  // Thumb travels from TRACK_PAD to (trackWidth - TRACK_PAD), clamped by thumb size.
-  // Corrected fill-end: thumb center (with padding + browser clamping) + overhang.
   const fillEndPct = trackWidth > 0
     ? ((TRACK_PAD + THUMB_SIZE / 2 + rawFraction * (trackWidth - 2 * TRACK_PAD - THUMB_SIZE) + THUMB_OVERHANG) / trackWidth) * 100
     : rawFraction * 100;
+
+  const dotValues = showDots && trackWidth > 0
+    ? Array.from(
+        { length: Math.round((max - min) / step) + 1 },
+        (_, i) => min + i * step,
+      ).filter((v) => v > value)
+    : [];
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -59,17 +71,30 @@ function SliderRow({
           {displayValue ?? value}
         </span>
       </div>
-      <input
-        ref={inputRef}
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="custom-slider"
-        style={{ '--fill': `${fillEndPct}%` } as React.CSSProperties}
-      />
+      <div className="relative">
+        <input
+          ref={inputRef}
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="custom-slider block"
+          style={{ '--fill': `${fillEndPct}%` } as React.CSSProperties}
+        />
+        {dotValues.length > 0 && (
+          <div className="absolute inset-0 pointer-events-none">
+            {dotValues.map((v) => (
+              <div
+                key={v}
+                className="absolute rounded-full bg-[#454a55]"
+                style={{ left: `${stepPct(v, min, max, trackWidth)}%`, top: '50%', width: 3, height: 3, transform: 'translate(-50%, -50%)' }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -306,7 +331,8 @@ export function ParticlePanel() {
           value={baseSize}
           min={0.5}
           max={2.5}
-          step={0.5}
+          step={0.25}
+          showDots
           onChange={(v) => {
             setBaseSize(v);
             applySize(v, volumetric ? 80 : 0);

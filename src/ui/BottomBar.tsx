@@ -1,4 +1,5 @@
 import { useToolStore } from '@/store/toolStore';
+import { useState, useRef } from 'react';
 import { useUIStore } from '@/store/uiStore';
 import { useSceneStore } from '@/store/sceneStore';
 import { uid } from '@/utils/uid';
@@ -104,6 +105,16 @@ export function BottomBar() {
   const setEllipseMode = useUIStore((s) => s.setEllipseMode);
   const animationPlaying = useUIStore((s) => s.animationPlaying);
   const setAnimationPlaying = useUIStore((s) => s.setAnimationPlaying);
+  const [hoveringEllipse, setHoveringEllipse] = useState(false);
+  const ellipseHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function onEllipseEnter() {
+    if (ellipseHideTimer.current) clearTimeout(ellipseHideTimer.current);
+    setHoveringEllipse(true);
+  }
+  function onEllipseLeave() {
+    ellipseHideTimer.current = setTimeout(() => setHoveringEllipse(false), 150);
+  }
 
   function placeShapeAtCenter(type: 'rectangle' | 'ellipse' | 'star') {
     const { documentWidth: dw, documentHeight: dh } = useUIStore.getState().viewport;
@@ -138,9 +149,18 @@ export function BottomBar() {
         <div className="bg-[#0e0f11] rounded-[22px] px-[6px] py-[6px] flex gap-[2px]">
           {TOOLS.map((tool, i) =>
             tool.type === 'ellipse' ? (
-              <div key="ellipse" className="relative">
-                {activeTool === 'ellipse' && (
-                  <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 flex items-center gap-[2px] bg-[#0e0f11] rounded-[14px] px-[6px] py-[6px]">
+              <div
+                key="ellipse"
+                className="relative"
+                onMouseEnter={onEllipseEnter}
+                onMouseLeave={onEllipseLeave}
+              >
+                {(activeTool === 'ellipse' || hoveringEllipse) && (
+                  <div
+                    className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 flex items-center gap-[2px] bg-[#0e0f11] rounded-[14px] px-[6px] py-[6px]"
+                    onMouseEnter={onEllipseEnter}
+                    onMouseLeave={onEllipseLeave}
+                  >
                     {ARC_MODES.map(({ mode, icon, label }) => (
                       <button
                         key={mode}

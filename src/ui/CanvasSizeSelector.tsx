@@ -1,11 +1,13 @@
 import { useUIStore } from '@/store/uiStore';
 
 const SIZES = [
-  { label: '1:1',  w: 1080, h: 1080 },
-  { label: '16:9', w: 1920, h: 1080 },
-  { label: '9:16', w: 1080, h: 1920 },
-  { label: '4:5',  w: 1080, h: 1350 },
-  { label: '3:4',  w: 1080, h: 1440 },
+  { label: '1:1',       w: 1080, h: 1080 },
+  { label: '16:9',      w: 1920, h: 1080 },
+  { label: '9:16',      w: 1080, h: 1920 },
+  { label: '4:5',       w: 1080, h: 1350 },
+  { label: '2:1',       w: 2160, h: 1080 },
+  { label: 'A3',        w: 1754, h: 2480 },
+  { label: 'A3 —',     w: 2480, h: 1754 },
 ] as const;
 
 function radius(i: number, total: number) {
