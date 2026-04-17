@@ -5,6 +5,7 @@ import { getHandles, getGroupHandles, applyResize } from '@/utils/handleUtils';
 import type { HandleId } from '@/utils/handleUtils';
 import { computeSnap } from '@/utils/snapUtils';
 import { useUIStore } from '@/store/uiStore';
+import { uid } from '@/utils/uid';
 
 function boxesOverlap(obj: SceneObject, r: { x: number; y: number; w: number; h: number }): boolean {
   return (
@@ -219,15 +220,50 @@ export const SelectTool: Tool = {
       }
       const selected = cbs.getToolState().selectedObjectIds;
       dragBase = docPoint;
-      dragObjPositions = objects
-        .filter((o) => selected.includes(o.id))
-        .map((o) => ({
-          id: o.id,
-          ox: o.position.x,
-          oy: o.position.y,
-          origPath:  o.type === 'freehand'   ? o.path  : undefined,
-          origPaths: o.type === 'svg-import' ? o.paths : undefined,
-        }));
+
+      if (state.altHeld) {
+        // Alt+drag: clone each selected object, drag the clones
+        const cloneIds: string[] = [];
+        dragObjPositions = [];
+        for (const o of objects.filter((o) => selected.includes(o.id))) {
+          const cloneId = uid();
+          let clone: SceneObject;
+          let cloneOrigPath: Path | undefined;
+          let cloneOrigPaths: Path[] | undefined;
+          if (o.type === 'freehand') {
+            const clonedPath: Path = { ...o.path, segments: [...o.path.segments] };
+            clone = { ...o, id: cloneId, position: { ...o.position }, path: clonedPath };
+            cloneOrigPath = clonedPath;
+          } else if (o.type === 'svg-import') {
+            const clonedPaths: Path[] = o.paths.map((p) => ({ ...p, segments: [...p.segments] }));
+            clone = { ...o, id: cloneId, position: { ...o.position }, paths: clonedPaths };
+            cloneOrigPaths = clonedPaths;
+          } else {
+            clone = { ...o, id: cloneId, position: { ...o.position } };
+          }
+          cbs.addObject(clone);
+          cloneIds.push(cloneId);
+          dragObjPositions.push({
+            id: cloneId,
+            ox: o.position.x,
+            oy: o.position.y,
+            origPath:  cloneOrigPath,
+            origPaths: cloneOrigPaths,
+          });
+        }
+        cbs.setToolState({ selectedObjectIds: cloneIds });
+      } else {
+        dragObjPositions = objects
+          .filter((o) => selected.includes(o.id))
+          .map((o) => ({
+            id: o.id,
+            ox: o.position.x,
+            oy: o.position.y,
+            origPath:  o.type === 'freehand'   ? o.path  : undefined,
+            origPaths: o.type === 'svg-import' ? o.paths : undefined,
+          }));
+      }
+
       hoverCursor = 'move';
       cbs.setToolState({ isDrawing: true });
     } else {
