@@ -1,10 +1,19 @@
 import type { Tool, ToolCallbacks } from '@/types/tools';
 import type { Point, Path, SnapLine } from '@/types/geometry';
 import type { SceneObject } from '@/types/scene';
-import { getHandles, applyResize } from '@/utils/handleUtils';
+import { getHandles, getGroupHandles, applyResize } from '@/utils/handleUtils';
 import type { HandleId } from '@/utils/handleUtils';
 import { computeSnap } from '@/utils/snapUtils';
 import { useUIStore } from '@/store/uiStore';
+
+function boxesOverlap(obj: SceneObject, r: { x: number; y: number; w: number; h: number }): boolean {
+  return (
+    obj.position.x < r.x + r.w &&
+    obj.position.x + obj.width  > r.x &&
+    obj.position.y < r.y + r.h &&
+    obj.position.y + obj.height > r.y
+  );
+}
 
 /** Simple point-in-bounding-box hit test */
 function hitTest(obj: SceneObject, pt: Point): boolean {
@@ -85,16 +94,52 @@ interface DragEntry {
   origPaths?: Path[]; // SVGImportObject
 }
 
+interface MultiResizeEntry {
+  id: string;
+  ox: number; oy: number;
+  ow: number; oh: number;
+  origPath?: Path;
+  origPaths?: Path[];
+}
+
 let dragBase: Point | null = null;
 let dragObjPositions: DragEntry[] = [];
+
+let marqueeStart: Point | null = null;
+let marqueeActive = false;
 
 let resizeHandle: HandleId | null = null;
 let resizeObjId: string | null = null;
 let resizeOrig: { x: number; y: number; w: number; h: number } | null = null;
 let resizeOrigPath: Path | null = null;
 let resizeOrigPaths: Path[] | null = null;
+let resizeGroupBBox: { x: number; y: number; w: number; h: number } | null = null;
+let resizeMultiEntries: MultiResizeEntry[] = [];
 let hoverCursor = 'default';
 let activeSnapLines: SnapLine[] = [];
+
+function groupBBox(objs: SceneObject[]): { x: number; y: number; w: number; h: number } {
+  const x1 = Math.min(...objs.map((o) => o.position.x));
+  const y1 = Math.min(...objs.map((o) => o.position.y));
+  const x2 = Math.max(...objs.map((o) => o.position.x + o.width));
+  const y2 = Math.max(...objs.map((o) => o.position.y + o.height));
+  return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+}
+
+function rescaleInGroup(
+  entry: { ox: number; oy: number; ow: number; oh: number },
+  orig: { x: number; y: number; w: number; h: number },
+  next: { x: number; y: number; w: number; h: number },
+): { x: number; y: number; w: number; h: number } {
+  const rx = orig.w > 0 ? (entry.ox - orig.x) / orig.w : 0;
+  const ry = orig.h > 0 ? (entry.oy - orig.y) / orig.h : 0;
+  const rw = orig.w > 0 ? entry.ow / orig.w : 1;
+  const rh = orig.h > 0 ? entry.oh / orig.h : 1;
+  return {
+    x: next.x + rx * next.w, y: next.y + ry * next.h,
+    w: rw * next.w,          h: rh * next.h,
+  };
+}
 
 export const SelectTool: Tool = {
   name: 'select',
@@ -103,10 +148,32 @@ export const SelectTool: Tool = {
     return hoverCursor;
   },
 
-  onPointerDown(_e: PointerEvent, docPoint: Point, cbs: ToolCallbacks): void {
+  onPointerDown(e: PointerEvent, docPoint: Point, cbs: ToolCallbacks): void {
     const state = cbs.getToolState();
     const objects = cbs.getObjects();
     const hitRadius = 8 / cbs.getScale();
+
+    // Multi-object resize handle hit
+    if (state.selectedObjectIds.length > 1) {
+      const selObjs = objects.filter((o) => state.selectedObjectIds.includes(o.id));
+      const gbbox = groupBBox(selObjs);
+      for (const h of getGroupHandles(gbbox)) {
+        if (dist(docPoint, h.pos) < hitRadius) {
+          resizeHandle = h.id;
+          resizeGroupBBox = gbbox;
+          resizeMultiEntries = selObjs.map((o) => ({
+            id: o.id,
+            ox: o.position.x, oy: o.position.y,
+            ow: o.width,      oh: o.height,
+            origPath:  o.type === 'freehand'   ? o.path  : undefined,
+            origPaths: o.type === 'svg-import' ? o.paths : undefined,
+          }));
+          hoverCursor = h.cursor;
+          cbs.setToolState({ isDrawing: true });
+          return;
+        }
+      }
+    }
 
     // Check if clicking a resize handle on the selected object
     if (state.selectedObjectIds.length === 1) {
@@ -139,8 +206,16 @@ export const SelectTool: Tool = {
     }
 
     if (hit) {
-      if (!state.selectedObjectIds.includes(hit.id)) {
-        cbs.setToolState({ selectedObjectIds: [hit.id] });
+      if (e.shiftKey) {
+        const current = state.selectedObjectIds;
+        const newIds = current.includes(hit.id)
+          ? current.filter((id) => id !== hit.id)
+          : [...current, hit.id];
+        cbs.setToolState({ selectedObjectIds: newIds });
+      } else {
+        if (!state.selectedObjectIds.includes(hit.id)) {
+          cbs.setToolState({ selectedObjectIds: [hit.id] });
+        }
       }
       const selected = cbs.getToolState().selectedObjectIds;
       dragBase = docPoint;
@@ -156,15 +231,59 @@ export const SelectTool: Tool = {
       hoverCursor = 'move';
       cbs.setToolState({ isDrawing: true });
     } else {
-      cbs.setToolState({ selectedObjectIds: [], isDrawing: false });
+      marqueeStart = docPoint;
+      marqueeActive = true;
+      cbs.setToolState({
+        selectedObjectIds: [],
+        isDrawing: true,
+        drawStart: docPoint,
+        drawCurrent: docPoint,
+      });
       dragBase = null;
       dragObjPositions = [];
       hoverCursor = 'default';
     }
   },
 
-  onPointerMove(_e: PointerEvent, docPoint: Point, cbs: ToolCallbacks): void {
+  onPointerMove(e: PointerEvent, docPoint: Point, cbs: ToolCallbacks): void {
+    void e;
     const state = cbs.getToolState();
+
+    // Marquee drag in progress
+    if (marqueeActive) {
+      cbs.setToolState({ drawCurrent: docPoint });
+      return;
+    }
+
+    // Multi-object resize in progress
+    if (resizeHandle && resizeGroupBBox && resizeMultiEntries.length > 0) {
+      const result = applyResize(resizeHandle, docPoint, resizeGroupBBox, state.shiftHeld, state.altHeld);
+      const ng = { x: result.position.x, y: result.position.y, w: result.width, h: result.height };
+      for (const entry of resizeMultiEntries) {
+        const scaled = rescaleInGroup(entry, resizeGroupBBox, ng);
+        const ob = { x: entry.ox, y: entry.oy, w: entry.ow, h: entry.oh };
+        const nb = { x: scaled.x, y: scaled.y, w: scaled.w, h: scaled.h };
+        if (entry.origPath) {
+          cbs.updateObject(entry.id, {
+            position: { x: scaled.x, y: scaled.y },
+            width: scaled.w, height: scaled.h,
+            path: scalePath(entry.origPath, ob, nb),
+          } as unknown as Partial<SceneObject>);
+        } else if (entry.origPaths) {
+          cbs.updateObject(entry.id, {
+            position: { x: scaled.x, y: scaled.y },
+            width: scaled.w, height: scaled.h,
+            paths: scalePaths(entry.origPaths, ob, nb),
+          } as unknown as Partial<SceneObject>);
+        } else {
+          cbs.updateObject(entry.id, {
+            position: { x: scaled.x, y: scaled.y },
+            width: scaled.w, height: scaled.h,
+          });
+        }
+      }
+      return;
+    }
 
     // Resize in progress
     if (resizeHandle && resizeOrig && resizeObjId) {
@@ -257,6 +376,14 @@ export const SelectTool: Tool = {
         }
       }
     } else if (state.selectedObjectIds.length > 1) {
+      const selObjs = objects.filter((o) => state.selectedObjectIds.includes(o.id));
+      const gbbox = groupBBox(selObjs);
+      for (const h of getGroupHandles(gbbox)) {
+        if (dist(docPoint, h.pos) < hitRadius) {
+          hoverCursor = h.cursor;
+          return;
+        }
+      }
       for (const id of state.selectedObjectIds) {
         const obj = objects.find((o) => o.id === id);
         if (obj && hitTest(obj, docPoint)) {
@@ -269,13 +396,36 @@ export const SelectTool: Tool = {
     hoverCursor = 'default';
   },
 
-  onPointerUp(_e: PointerEvent, _docPoint: Point, cbs: ToolCallbacks): void {
-    cbs.setToolState({ isDrawing: false });
+  onPointerUp(_e: PointerEvent, docPoint: Point, cbs: ToolCallbacks): void {
+    if (marqueeActive && marqueeStart) {
+      const ex = docPoint.x, ey = docPoint.y;
+      const rect = {
+        x: Math.min(marqueeStart.x, ex),
+        y: Math.min(marqueeStart.y, ey),
+        w: Math.abs(ex - marqueeStart.x),
+        h: Math.abs(ey - marqueeStart.y),
+      };
+      const hits = cbs.getObjects().filter(
+        (o) => !o.locked && o.visible && boxesOverlap(o, rect),
+      );
+      cbs.setToolState({
+        selectedObjectIds: hits.map((o) => o.id),
+        isDrawing: false,
+        drawStart: null,
+        drawCurrent: null,
+      });
+      marqueeStart = null;
+      marqueeActive = false;
+    } else {
+      cbs.setToolState({ isDrawing: false });
+    }
     resizeHandle = null;
     resizeObjId = null;
     resizeOrig = null;
     resizeOrigPath = null;
     resizeOrigPaths = null;
+    resizeGroupBBox = null;
+    resizeMultiEntries = [];
     dragBase = null;
     dragObjPositions = [];
     activeSnapLines = [];

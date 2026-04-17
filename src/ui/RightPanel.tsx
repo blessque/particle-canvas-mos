@@ -15,6 +15,16 @@ function ColorSlot({
   const inputRef = useRef<HTMLInputElement>(null);
   const colorOnOpenRef = useRef<string>(color);
   const [history, setHistory] = useState<string[]>([]);
+  const [editing, setEditing] = useState(false);
+  const [draftHex, setDraftHex] = useState('');
+  const hexInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing) {
+      hexInputRef.current?.focus();
+      hexInputRef.current?.select();
+    }
+  }, [editing]);
 
   useEffect(() => {
     const input = inputRef.current;
@@ -34,20 +44,54 @@ function ColorSlot({
     inputRef.current?.click();
   }
 
+  function commitHex() {
+    setEditing(false);
+    const val = draftHex.trim();
+    if (/^[0-9A-F]{6}$/i.test(val)) {
+      const newColor = '#' + val;
+      if (newColor.toLowerCase() !== color.toLowerCase()) {
+        setHistory((h) => [color, ...h.filter((x) => x !== color)].slice(0, 5));
+      }
+      onChange(newColor);
+    }
+  }
+
   const hex = color.replace('#', '').toUpperCase();
 
   return (
     <div className="flex flex-col gap-[6px]">
       <div
-        className="bg-[#33373f] rounded-[8px] pl-[3px] pr-[6px] py-[3px] flex items-center gap-2 cursor-pointer"
-        onClick={handleOpen}
+        className="bg-[#33373f] rounded-[8px] pl-[3px] pr-[6px] py-[3px] flex items-center gap-2"
       >
         <div
-          className="w-8 h-8 rounded-[5px] shrink-0 border border-white/5"
+          className="w-8 h-8 rounded-[5px] shrink-0 border border-white/5 cursor-pointer"
           style={{ backgroundColor: color }}
+          onClick={handleOpen}
         />
-        <span className="font-cond-regular text-[14px] text-white flex-1">{label}</span>
-        <span className="font-mono-book text-[14px] text-white opacity-50 uppercase">{hex}</span>
+        <span className="font-cond-regular text-[14px] text-white flex-1 cursor-pointer" onClick={handleOpen}>{label}</span>
+        {editing ? (
+          <input
+            ref={hexInputRef}
+            type="text"
+            value={draftHex}
+            maxLength={6}
+            spellCheck={false}
+            onChange={(e) => setDraftHex(e.target.value.toUpperCase().replace(/[^0-9A-F]/g, ''))}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitHex();
+              if (e.key === 'Escape') setEditing(false);
+            }}
+            onBlur={commitHex}
+            className="font-mono-book text-[14px] text-white uppercase bg-transparent border-none outline-none caret-white w-[6ch] p-0"
+          />
+        ) : (
+          <span
+            className="font-mono-book text-[14px] text-white/50 uppercase cursor-text select-none"
+            onClick={() => { setDraftHex(hex); setEditing(true); }}
+          >
+            {hex}
+          </span>
+        )}
       </div>
       <input
         ref={inputRef}

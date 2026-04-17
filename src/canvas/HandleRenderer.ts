@@ -3,7 +3,7 @@ import type { SceneObject, EllipseObject } from '@/types/scene';
 import type { ViewportState } from '@/store/uiStore';
 import { documentToCanvas, scaleToCanvas } from '@/utils/coordinates';
 import { computeStarVertices, computeEllipseArcAngles } from '@/engine/shapeGeometry';
-import { getHandles } from '@/utils/handleUtils';
+import { getHandles, getGroupHandles } from '@/utils/handleUtils';
 
 /**
  * Render selection highlights and drawing ghost previews.
@@ -21,10 +21,34 @@ export function renderHandles(
   // Draw selection outlines for selected objects
   for (const id of toolState.selectedObjectIds) {
     const obj = objects.find((o) => o.id === id);
-    if (obj) {
-      drawSelectionOutline(ctx, obj, viewport);
-      drawResizeHandles(ctx, obj, viewport);
+    if (obj) drawSelectionOutline(ctx, obj, viewport);
+  }
+
+  // Draw resize handles
+  if (toolState.selectedObjectIds.length === 1) {
+    const obj = objects.find((o) => o.id === toolState.selectedObjectIds[0]);
+    if (obj) drawResizeHandles(ctx, obj, viewport);
+  } else if (toolState.selectedObjectIds.length > 1) {
+    const selObjs = objects.filter((o) => toolState.selectedObjectIds.includes(o.id));
+    if (selObjs.length > 0) {
+      const x1 = Math.min(...selObjs.map((o) => o.position.x));
+      const y1 = Math.min(...selObjs.map((o) => o.position.y));
+      const x2 = Math.max(...selObjs.map((o) => o.position.x + o.width));
+      const y2 = Math.max(...selObjs.map((o) => o.position.y + o.height));
+      const gbbox = { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+      drawGroupBBoxOutline(ctx, gbbox, viewport);
+      drawGroupHandles(ctx, gbbox, viewport);
     }
+  }
+
+  // Draw marquee selection rect
+  if (
+    toolState.activeTool === 'select' &&
+    toolState.isDrawing &&
+    toolState.drawStart &&
+    toolState.drawCurrent
+  ) {
+    drawMarquee(ctx, toolState, viewport);
   }
 
   // Draw ghost preview while user is actively drawing a shape
@@ -148,6 +172,65 @@ function drawResizeHandles(
     ctx.fillRect(cv.x - SIZE / 2, cv.y - SIZE / 2, SIZE, SIZE);
     ctx.strokeRect(cv.x - SIZE / 2, cv.y - SIZE / 2, SIZE, SIZE);
   }
+}
+
+function drawGroupBBoxOutline(
+  ctx: CanvasRenderingContext2D,
+  bbox: { x: number; y: number; w: number; h: number },
+  viewport: ViewportState,
+): void {
+  const tl = documentToCanvas({ x: bbox.x, y: bbox.y }, viewport);
+  const cw = scaleToCanvas(bbox.w, viewport);
+  const ch = scaleToCanvas(bbox.h, viewport);
+  ctx.strokeStyle = '#4af';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 3]);
+  ctx.beginPath();
+  ctx.rect(tl.x - 2, tl.y - 2, cw + 4, ch + 4);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawGroupHandles(
+  ctx: CanvasRenderingContext2D,
+  bbox: { x: number; y: number; w: number; h: number },
+  viewport: ViewportState,
+): void {
+  const SIZE = 7;
+  ctx.fillStyle = '#fff';
+  ctx.strokeStyle = '#4af';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([]);
+  for (const h of getGroupHandles(bbox)) {
+    const cv = documentToCanvas(h.pos, viewport);
+    ctx.fillRect(cv.x - SIZE / 2, cv.y - SIZE / 2, SIZE, SIZE);
+    ctx.strokeRect(cv.x - SIZE / 2, cv.y - SIZE / 2, SIZE, SIZE);
+  }
+}
+
+function drawMarquee(
+  ctx: CanvasRenderingContext2D,
+  toolState: ToolState,
+  viewport: ViewportState,
+): void {
+  const { drawStart, drawCurrent } = toolState;
+  if (!drawStart || !drawCurrent) return;
+  const x = Math.min(drawStart.x, drawCurrent.x);
+  const y = Math.min(drawStart.y, drawCurrent.y);
+  const w = Math.abs(drawCurrent.x - drawStart.x);
+  const h = Math.abs(drawCurrent.y - drawStart.y);
+  const tl = documentToCanvas({ x, y }, viewport);
+  const cw = scaleToCanvas(w, viewport);
+  const ch = scaleToCanvas(h, viewport);
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 3]);
+  ctx.beginPath();
+  ctx.rect(tl.x, tl.y, cw, ch);
+  ctx.fill();
+  ctx.stroke();
+  ctx.setLineDash([]);
 }
 
 function drawGhostPreview(

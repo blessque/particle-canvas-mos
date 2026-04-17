@@ -9,27 +9,29 @@ export interface HandleInfo {
   cursor: string;  // CSS cursor string
 }
 
+/** Returns 8 resize handles for an arbitrary bbox (doc space). */
+export function getGroupHandles(
+  bbox: { x: number; y: number; w: number; h: number },
+): HandleInfo[] {
+  const { x, y, w, h } = bbox;
+  return [
+    { id: 'nw', pos: { x,        y        }, cursor: 'nwse-resize' },
+    { id: 'ne', pos: { x: x + w, y        }, cursor: 'nesw-resize' },
+    { id: 'sw', pos: { x,        y: y + h }, cursor: 'nesw-resize' },
+    { id: 'se', pos: { x: x + w, y: y + h }, cursor: 'nwse-resize' },
+    { id: 'n',  pos: { x: x + w / 2, y        }, cursor: 'ns-resize' },
+    { id: 's',  pos: { x: x + w / 2, y: y + h }, cursor: 'ns-resize' },
+    { id: 'e',  pos: { x: x + w, y: y + h / 2 }, cursor: 'ew-resize' },
+    { id: 'w',  pos: { x,        y: y + h / 2 }, cursor: 'ew-resize' },
+  ];
+}
+
 /** Returns resize handle positions for a selected object (doc space). */
 export function getHandles(obj: SceneObject): HandleInfo[] {
-  const { x, y } = obj.position;
-  const { width: w, height: h } = obj;
-
-  const handles: HandleInfo[] = [
-    { id: 'nw', pos: { x, y },                  cursor: 'nwse-resize' },
-    { id: 'ne', pos: { x: x + w, y },            cursor: 'nesw-resize' },
-    { id: 'sw', pos: { x, y: y + h },            cursor: 'nesw-resize' },
-    { id: 'se', pos: { x: x + w, y: y + h },     cursor: 'nwse-resize' },
-  ];
-
-  // Midpoint edge handles for all resizable shapes
-  handles.push(
-    { id: 'n', pos: { x: x + w / 2, y },          cursor: 'ns-resize' },
-    { id: 's', pos: { x: x + w / 2, y: y + h },   cursor: 'ns-resize' },
-    { id: 'e', pos: { x: x + w, y: y + h / 2 },   cursor: 'ew-resize' },
-    { id: 'w', pos: { x, y: y + h / 2 },          cursor: 'ew-resize' },
-  );
-
-  return handles;
+  return getGroupHandles({
+    x: obj.position.x, y: obj.position.y,
+    w: obj.width,      h: obj.height,
+  });
 }
 
 /**
