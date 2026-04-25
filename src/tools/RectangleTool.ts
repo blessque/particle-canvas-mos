@@ -40,6 +40,7 @@ export const RectangleTool: Tool = {
       visible: true,
       locked: false,
     };
+    cbs.pushHistory();
     cbs.addObject(obj);
     cbs.setToolState({ activeTool: 'select' });
   },

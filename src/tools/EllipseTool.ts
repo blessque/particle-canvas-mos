@@ -55,6 +55,7 @@ export const EllipseTool: Tool = {
       arcStartAngle,
       arcEndAngle,
     };
+    cbs.pushHistory();
     cbs.addObject(obj);
     cbs.setToolState({ activeTool: 'select' });
   },

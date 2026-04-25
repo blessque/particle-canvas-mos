@@ -274,6 +274,7 @@ export function ParticlePanel() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleClear() {
+    useSceneStore.getState().pushHistory();
     useSceneStore.getState().clearAll();
     useToolStore.getState().clearSelection();
   }
@@ -285,6 +286,7 @@ export function ParticlePanel() {
     const vp = useUIStore.getState().viewport;
     const obj = importSVG(text, vp.documentWidth, vp.documentHeight);
     if (obj) {
+      useSceneStore.getState().pushHistory();
       useSceneStore.getState().addObject(obj);
       useToolStore.getState().setActiveTool('select');
       useToolStore.getState().selectObjects([obj.id]);

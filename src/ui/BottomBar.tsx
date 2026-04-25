@@ -3,6 +3,7 @@ import { useState, useRef } from 'react';
 import { useUIStore } from '@/store/uiStore';
 import { useSceneStore } from '@/store/sceneStore';
 import { uid } from '@/utils/uid';
+import { computeEllipseArcAngles } from '@/engine/shapeGeometry';
 import type { ToolType } from '@/types/tools';
 import type { RectangleObject, EllipseObject, StarObject } from '@/types/scene';
 
@@ -84,7 +85,6 @@ const TOOLS: {
 ];
 
 const ARC_MODES = [
-  { mode: 'full'    as const, icon: '◯', label: 'Полный эллипс' },
   { mode: 'half'    as const, icon: '⌓', label: 'Полудуга' },
   { mode: 'quarter' as const, icon: '◜', label: 'Четверть дуги' },
 ];
@@ -116,7 +116,7 @@ export function BottomBar() {
     ellipseHideTimer.current = setTimeout(() => setHoveringEllipse(false), 150);
   }
 
-  function placeShapeAtCenter(type: 'rectangle' | 'ellipse' | 'star') {
+  function placeShapeAtCenter(type: 'rectangle' | 'ellipse' | 'star', arcMode: 'full' | 'half' | 'quarter' = 'full') {
     const { documentWidth: dw, documentHeight: dh } = useUIStore.getState().viewport;
     const size = Math.min(dw, dh) * 0.35;
     const x = dw / 2 - size / 2;
@@ -126,10 +126,14 @@ export function BottomBar() {
     if (type === 'rectangle') {
       obj = { ...base, type: 'rectangle' };
     } else if (type === 'ellipse') {
-      obj = { ...base, type: 'ellipse', arcStartAngle: 0, arcEndAngle: Math.PI * 2 };
+      const angles = arcMode === 'full'
+        ? { start: 0, end: Math.PI * 2 }
+        : computeEllipseArcAngles(1, -1, arcMode);
+      obj = { ...base, type: 'ellipse', arcStartAngle: angles.start, arcEndAngle: angles.end };
     } else {
       obj = { ...base, type: 'star', points: 5, innerRadiusRatio: 0.4 };
     }
+    useSceneStore.getState().pushHistory();
     useSceneStore.getState().addObject(obj);
     useToolStore.getState().setActiveTool('select');
     useToolStore.getState().selectObjects([obj.id]);
@@ -164,7 +168,7 @@ export function BottomBar() {
                     {ARC_MODES.map(({ mode, icon, label }) => (
                       <button
                         key={mode}
-                        onClick={() => setEllipseMode(mode)}
+                        onClick={() => { setEllipseMode(mode); placeShapeAtCenter('ellipse', mode); }}
                         title={label}
                         className={[
                           'px-2 py-1 rounded-[8px] text-base transition-colors',

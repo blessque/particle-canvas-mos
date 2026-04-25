@@ -92,12 +92,17 @@ export function distributeParticles(
 
     // Only spawn anchors in 'both' spread mode
     const isAnchor = config.spawnDirection === 'both' && rng() < (config.anchorFraction ?? 0);
+    // Fade anchor opacity and density as spread grows — prevents stark outline ring at high falloff
+    const ANCHOR_FADE_REF = 50; // doc units at which anchors are at full strength
+    const anchorFade = isAnchor
+      ? Math.min(1.0, ANCHOR_FADE_REF / config.falloffDistance)
+      : 1.0;
     let d: number;
     if (isAnchor) {
       // 1-particle-thick band: d ∈ [0, maxSize], strongly biased toward 0
       d = rng() * rng() * config.maxSize;
-      // Extra sparsity — keep ~35% of candidates; Poisson alone isn't enough
-      if (rng() > 0.35) continue;
+      // Extra sparsity — keep ~35% of candidates, scaled down at high spread
+      if (rng() > 0.35 * anchorFade) continue;
     } else {
       d = rng() * effectiveFalloff;
       // 4. Reject based on falloff probability
@@ -132,7 +137,8 @@ export function distributeParticles(
 
     // 7. Accept particle
     hash.add(candidate.x, candidate.y);
-    const opacity = 1.0 - config.falloffBias * (1.0 - rng());
+    const rawOpacity = 1.0 - config.falloffBias * (1.0 - rng());
+    const opacity = rawOpacity * anchorFade;
     const radius = config.minSize + rng() * (config.maxSize - config.minSize);
 
     particles.push({

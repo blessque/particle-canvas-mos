@@ -42,6 +42,7 @@ export const StarTool: Tool = {
       points: 5,
       innerRadiusRatio: 0.4,
     };
+    cbs.pushHistory();
     cbs.addObject(obj);
     cbs.setToolState({ activeTool: 'select' });
   },

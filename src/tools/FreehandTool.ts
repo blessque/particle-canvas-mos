@@ -95,6 +95,7 @@ export const FreehandTool: Tool = {
 
     const smoothed = chaikin(rawPoints, 4);
     const obj = buildFreehand(smoothed);
+    cbs.pushHistory();
     cbs.addObject(obj);
     cbs.setToolState({ isDrawing: false, pendingPath: null });
     rawPoints = [];

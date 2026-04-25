@@ -170,6 +170,7 @@ export const SelectTool: Tool = {
             origPaths: o.type === 'svg-import' ? o.paths : undefined,
           }));
           hoverCursor = h.cursor;
+          cbs.pushHistory();
           cbs.setToolState({ isDrawing: true });
           return;
         }
@@ -189,6 +190,7 @@ export const SelectTool: Tool = {
             resizeOrigPath  = selObj.type === 'freehand'    ? selObj.path  : null;
             resizeOrigPaths = selObj.type === 'svg-import'  ? selObj.paths : null;
             hoverCursor = h.cursor;
+            cbs.pushHistory();
             cbs.setToolState({ isDrawing: true });
             return;
           }
@@ -220,6 +222,7 @@ export const SelectTool: Tool = {
       }
       const selected = cbs.getToolState().selectedObjectIds;
       dragBase = docPoint;
+      cbs.pushHistory();
 
       if (state.altHeld) {
         // Alt+drag: clone each selected object, drag the clones
@@ -474,6 +477,7 @@ export const SelectTool: Tool = {
   onKeyDown(e: KeyboardEvent, cbs: ToolCallbacks): void {
     const state = cbs.getToolState();
     if (e.key === 'Delete' || e.key === 'Backspace') {
+      cbs.pushHistory();
       for (const id of state.selectedObjectIds) {
         cbs.deleteObject(id);
       }

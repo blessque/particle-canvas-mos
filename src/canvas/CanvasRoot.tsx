@@ -53,6 +53,7 @@ export function CanvasRoot({ particlesRef, animatedParticlesRef, renderTick, can
     addObject: (obj) => useSceneStore.getState().addObject(obj),
     updateObject: (id, partial) => useSceneStore.getState().updateObject(id, partial),
     deleteObject: (id) => useSceneStore.getState().removeObject(id),
+    pushHistory: () => useSceneStore.getState().pushHistory(),
     setToolState: (partial) => {
       const s = useToolStore.getState();
       if ('isDrawing'          in partial) s.setDrawing(partial.isDrawing!);
@@ -220,12 +221,22 @@ export function CanvasRoot({ particlesRef, animatedParticlesRef, renderTick, can
       const tag = document.activeElement?.tagName;
       const inInput = tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA';
 
-      // ⌥O cycles ellipse arc mode (full → half → quarter → full)
+      // Cmd+Z / Cmd+Shift+Z — undo / redo
+      if ((e.metaKey || e.ctrlKey) && e.code === 'KeyZ') {
+        e.preventDefault();
+        if (e.shiftKey) useSceneStore.getState().redo();
+        else            useSceneStore.getState().undo();
+        return;
+      }
+
+      // ⌥O cycles ellipse arc mode (full → half → quarter → full) and activates ellipse draw tool
       if (e.code === 'KeyO' && e.altKey) {
+        e.preventDefault();
         const modes = ['full', 'half', 'quarter'] as const;
         const current = useUIStore.getState().ellipseMode;
         const idx = modes.indexOf(current);
         useUIStore.getState().setEllipseMode(modes[(idx + 1) % modes.length]!);
+        useToolStore.getState().setActiveTool('ellipse');
         return;
       }
 

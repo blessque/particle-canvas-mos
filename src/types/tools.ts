@@ -36,4 +36,5 @@ export interface ToolCallbacks {
   getToolState(): ToolState;
   getObjects(): import('./scene').SceneObject[];
   getScale(): number;
+  pushHistory(): void;
 }
