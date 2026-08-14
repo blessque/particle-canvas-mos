@@ -147,8 +147,10 @@ export function BottomBar() {
   }
 
   return (
-    <div className="flex items-center justify-center h-[68px] bg-black px-4 shrink-0">
-      <div className="flex items-center gap-2">
+    <div className="pointer-events-none flex items-center justify-center h-[68px] px-4 shrink-0">
+      {/* No backdrop: the tools pill is opaque on its own, and a full-width band
+          clipped the side panels. Only this group takes pointer events. */}
+      <div className="pointer-events-auto flex items-center gap-2">
         {/* Centered tools pill */}
         <div className="bg-[#0e0f11] rounded-[22px] px-[6px] py-[6px] flex gap-[2px]">
           {TOOLS.map((tool, i) =>

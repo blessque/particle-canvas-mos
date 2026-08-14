@@ -1,47 +1,13 @@
 import { Muxer, ArrayBufferTarget } from 'mp4-muxer';
-import type { Particle, ParticleConfig, AnimatedParticle, AnimationConfig } from '@/types/particles';
+import type { ParticleConfig, AnimatedParticle, AnimationConfig } from '@/types/particles';
 import { computeFrame } from '@/engine/animationEngine';
+import { renderParticleFrame } from '@/export/frameRenderer';
 
 export interface VideoExportOptions {
   scale: 1 | 2;
   fps: 30 | 60;
   duration: number;
   canvasColor: string;
-}
-
-function parseHex(hex: string): [number, number, number] {
-  const h = hex.replace('#', '');
-  return [
-    parseInt(h.substring(0, 2), 16),
-    parseInt(h.substring(2, 4), 16),
-    parseInt(h.substring(4, 6), 16),
-  ];
-}
-
-function renderFrame(
-  ctx: OffscreenCanvasRenderingContext2D,
-  particles: Particle[],
-  config: ParticleConfig,
-  canvasColor: string,
-  w: number,
-  h: number,
-  scale: number,
-): void {
-  ctx.resetTransform();
-
-  // Fill background
-  ctx.fillStyle = canvasColor;
-  ctx.fillRect(0, 0, w, h);
-
-  ctx.scale(scale, scale);
-
-  const [r, g, b] = parseHex(config.color);
-  for (const p of particles) {
-    ctx.fillStyle = `rgba(${r},${g},${b},${p.opacity.toFixed(3)})`;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-    ctx.fill();
-  }
 }
 
 function triggerDownload(data: Uint8Array, filename: string): void {
@@ -184,7 +150,7 @@ export async function exportVideo(
 
     const particles = computeFrame(animatedParticles, animationConfig, elapsed);
 
-    renderFrame(ctx, particles, particleConfig, options.canvasColor, w, h, scale);
+    renderParticleFrame(ctx, particles, particleConfig, options.canvasColor, w, h, scale);
 
     const timestamp = Math.round(i * (1_000_000 / fps));
     const frame = new VideoFrame(canvas, { timestamp });

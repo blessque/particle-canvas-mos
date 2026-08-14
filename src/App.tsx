@@ -43,7 +43,7 @@ export default function App() {
     <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-black text-white">
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* Left sidebar */}
-        <aside className="w-60 shrink-0 overflow-y-auto no-scrollbar">
+        <aside className="w-60 shrink-0 overflow-y-auto no-scrollbar [mask-image:linear-gradient(to_bottom,black_calc(100%_-_64px),transparent)]">
           <div className="flex flex-col gap-2 px-2 pb-[80px] pt-3">
             <ParticlePanel />
           </div>
@@ -60,7 +60,7 @@ export default function App() {
         </main>
 
         {/* Right panel */}
-        <aside className="w-60 shrink-0 overflow-y-auto no-scrollbar">
+        <aside className="w-60 shrink-0 overflow-y-auto no-scrollbar [mask-image:linear-gradient(to_bottom,black_calc(100%_-_64px),transparent)]">
           <div className="flex flex-col gap-2 px-2 pb-[80px] pt-3">
             <RightPanel />
             <ExportButton
@@ -78,7 +78,7 @@ export default function App() {
 
       {/* Bottom bar — floats above content; does not shrink the scroll region */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center">
-        <div className="pointer-events-auto w-full">
+        <div className="w-full">
           <BottomBar />
         </div>
       </div>

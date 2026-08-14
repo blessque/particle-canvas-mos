@@ -1,4 +1,5 @@
 import type { Particle, ParticleConfig } from '@/types/particles';
+import { createExportCanvas, canvasToPNGBlob, renderParticleFrame } from '@/export/frameRenderer';
 
 function triggerDownload(url: string, filename: string): void {
   const a = document.createElement('a');
@@ -22,49 +23,10 @@ export async function exportPNG(
   const w = docWidth * scale;
   const h = docHeight * scale;
 
-  // OffscreenCanvas with HTMLCanvasElement fallback for older browsers
-  let canvas: OffscreenCanvas | HTMLCanvasElement;
-  let ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
+  const { canvas, ctx } = createExportCanvas(w, h);
+  renderParticleFrame(ctx, particles, config, null, w, h, scale);
 
-  if (typeof OffscreenCanvas !== 'undefined') {
-    canvas = new OffscreenCanvas(w, h);
-    ctx = canvas.getContext('2d') as OffscreenCanvasRenderingContext2D;
-  } else {
-    const el = document.createElement('canvas');
-    el.width = w;
-    el.height = h;
-    canvas = el;
-    ctx = el.getContext('2d') as CanvasRenderingContext2D;
-  }
-
-  ctx.clearRect(0, 0, w, h);
-  if (scale !== 1) ctx.scale(scale, scale);
-
-  // Parse hex color once
-  const hex = config.color.replace('#', '');
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-
-  for (const p of particles) {
-    ctx.fillStyle = `rgba(${r},${g},${b},${p.opacity.toFixed(3)})`;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  let blob: Blob;
-  if (canvas instanceof OffscreenCanvas) {
-    blob = await canvas.convertToBlob({ type: 'image/png' });
-  } else {
-    blob = await new Promise<Blob>((resolve, reject) => {
-      (canvas as HTMLCanvasElement).toBlob((b) => {
-        if (b) resolve(b);
-        else reject(new Error('toBlob failed'));
-      }, 'image/png');
-    });
-  }
-
+  const blob = await canvasToPNGBlob(canvas);
   const url = URL.createObjectURL(blob);
   triggerDownload(url, 'particles.png');
 }

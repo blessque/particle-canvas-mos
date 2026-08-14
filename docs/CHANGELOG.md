@@ -9,6 +9,8 @@ Full release notes live in the Claude memory file:
 
 | Date | Iteration | What |
 |------|-----------|------|
+| 2026-08-14 | 21 | PNG sequence export: "Скачать X кадров" → ZIP of transparent frames (STORE, fflate), measured pre-flight size estimate + confirm above 500 MB, dated archive name; shared frameRenderer dedups PNG/video draw; bottom bar background removed (was clipping side panels) |
+| 2026-04-25 | 20 | Undo/redo history in sceneStore (pushHistory from every tool), ellipse arc fixes, anchor particle appearance improved |
 | 2026-04-18 | 19 | Alt+drag duplicates selected shapes (single and multi-selection); originals stay in place, copies move with cursor and become selected |
 | 2026-04-16 | 18 | Fix Safari MP4 export: addVideoChunkRaw with explicit frameDuration (chunk.duration is null in Safari), shallow-copy decoderConfig to patch null colorSpace |
 | 2026-04-16 | 17 | Slider fill-end precision fix: JS-computed thumb center with track padding; symmetric 3px fill overhang on all sides; bottom toolbar pill padding equalised |
